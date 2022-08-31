@@ -43,9 +43,11 @@ iamclient.attach_user_policy(
 
 DRSAgentKeys = iamclient.create_access_key(UserName='DRSAgentUser')
 failbackKeys = iamclient.create_access_key(UserName='failback')
-
-with open('config.txt','w') as f:
-    f.write('DRSAgentUser access keys: '+ DRSAgentKeys['AccessKey']['AccessKeyId'])
-    f.write('DRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
-    f.write('Failback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
-    f.write('Failback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
+try:
+    with open('config.txt','w') as f:
+        f.write('DRSAgentUser access keys: '+ DRSAgentKeys['AccessKey']['AccessKeyId'])
+        f.write('DRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
+        f.write('Failback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
+        f.write('Failback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
+except FileNotFoundError:
+    print('Error')
