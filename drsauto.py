@@ -45,8 +45,8 @@ failbackKeys = iamclient.create_access_key(UserName='failback')
 try:
     with open('config.txt','w') as f:
         f.write('DRSAgentUser access keys: '+ DRSAgentKeys['AccessKey']['AccessKeyId'])
-        f.write('DRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
-        f.write('Failback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
-        f.write('Failback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
+        f.write('\nDRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
+        f.write('\nFailback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
+        f.write('\nFailback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
 except FileNotFoundError:
     print('Error')
