@@ -1,5 +1,4 @@
 import boto3
-import click
 from botocore.exceptions import ClientError
 import subprocess
 
