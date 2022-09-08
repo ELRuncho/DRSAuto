@@ -68,7 +68,7 @@ def check_vpc_value(prompt):
     return value
 
 # provides info on a vpc
-def describe_vpc(tag, tag_value, max_items=1):
+def describe_vpc(tag, tag_value, max_items=6):
     try:
         response = ec2_client.describe_vpcs(
                         Filters=[
