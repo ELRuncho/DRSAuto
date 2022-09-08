@@ -19,9 +19,11 @@ def drsusers():
         if error.response['Error']['Code']=='EntityAlreadyExist':
             print('El usuario DRSAgentUser ya existe')
             #return 'el usuario ya existe'
+            pass
         else:
             print('Error inesperado al crear el usuario', error)
             #return 'no se pudo crear el usuario', error
+            pass
 
     try:
         failback = iamclient.create_user(UserName='drsfailback',)
@@ -30,9 +32,11 @@ def drsusers():
         if error.response['Error']['Code']=='EntityAlreadyExist':
             print('El usuario drsfailback ya existe')
             #return 'el usuario ya existe'
+            pass
         else:
             print('Error inesperado al crear el usuario', error)
             #return 'no se pudo crear el usuario', error
+            pass
 
     iamclient.attach_user_policy(
         UserName='DRSAgentUser',
@@ -67,8 +71,11 @@ def check_vpc_value(prompt):
 
     return value
 
-# provides info on a vpc
+
 def describe_vpc(tag, tag_value, max_items=6):
+    """
+        Provides info on a VPC
+    """
     try:
         response = ec2_client.describe_vpcs(
                         Filters=[
@@ -84,13 +91,63 @@ def describe_vpc(tag, tag_value, max_items=6):
     else:
         return response
 
-def molith_infra():
+def create_security_group(description,groupname,vpc_id):
+    """
+        Creates a security Group
+    """
+    try:
+        response=ec2_client.create_security_group(
+                                                    Description=description,
+                                                    GroupName=groupname,
+                                                    VpcId=vpc_id,
+                                                    TagSpecifications=[
+                                                        {
+                                                            'ResourceType':'security-group',
+                                                            'Tags':[
+                                                                {
+                                                                    'Key':'Name',
+                                                                    'Value': groupname
+                                                                },
+                                                                {
+                                                                    'Key':'Creator',
+                                                                    'Value': 'DRSAuto'
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                )
+    except ClientError as error:
+        print('Error al crear el security group', error)
+    else:
+        return response
+
+def add_ingress_rule(security_group_id,port,ipRange):
+    """
+        Creates a SG ingres rule 
+    """
+    try:
+        response=ec2_client.authorize_security_group_ingress(
+                                                                GroupId=security_group_id,
+                                                                CidrIp=ipRange,
+                                                                FromPort=port,
+                                                                ToPort=port
+                                                            )
+    except ClientError as error:
+        print('Error al crear la regla de ingreso', error)
+    else:
+        return response
+    
+
+def molith_infra(vpc,port,trafic_origin):
+    monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
+    ingressrule=add_ingress_rule(monolith_sec_group.GroupId,port,trafic_origin)
+    #egressrule
+
+
+def front_back_infra(vpc):
     pass
 
-def front_back_infra():
-    pass
-
-def three_tier_infra():
+def three_tier_infra(vpc):
     pass
 
 print("\nAhora debes instalar los ")
@@ -117,10 +174,12 @@ if __name__ == '__main__':
         vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT): ")
 
         if vpc_option == "DEFAULT":
-            describe_vpc('NAME','NABPVPC')
+            selectedvpc=describe_vpc('NAME','NABPVPC')
         elif vpc_option=="ESPECIFICA":
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
+            selectedvpc=describe_vpc('NAME','NABPVPC')
 
+        print(selectedvpc)
         print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
 
         print("""
@@ -157,7 +216,10 @@ if __name__ == '__main__':
         appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3): "))
 
         if appstyle==1:
-            molith_infra()
+            vpcid=selectedvpc[0]["VpcId"]
+            trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
+            trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+            molith_infra(vpcid,trafic_port,trafic_origin)
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
