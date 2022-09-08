@@ -71,10 +71,12 @@ def check_vpc_value(prompt):
 def describe_vpc(tag, tag_value, max_items=1):
     try:
         response = ec2_client.describe_vpcs(
-                        Filters=[{
-                            'Name':f'tag:{tag}',
-                            'Values': tag_value
-                        }],
+                        Filters=[
+                            {
+                                'Name':f'tag:{tag}',
+                                'Values': [tag_value]
+                            },
+                        ],
                         MaxResults = max_items
                     )
     except ClientError as error:
@@ -112,7 +114,7 @@ if __name__ == '__main__':
         print("\nPermisos basicos creados")
         print("\nRecuerda que para desplegar tu DR te recomendamos tener una VPC con subredes publicas y privadas")
 
-        vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT):")
+        vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT): ")
 
         if vpc_option == "DEFAULT":
             describe_vpc('NAME','NABPVPC')
