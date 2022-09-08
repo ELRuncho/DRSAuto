@@ -57,6 +57,8 @@ def drsusers():
             f.write('\nDRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
             f.write('\nFailback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
             f.write('\nFailback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
+            f.write('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-installer-init.py')
+            f.write('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
     except FileNotFoundError:
         print('Error')
 
@@ -164,7 +166,7 @@ if __name__ == '__main__':
         |_____/|_|  \_\_____/  /_/    \_\____/   |_|  \____/ 
         """)
     print('''\nBienvenido al script para automatizar Elastic Disaster Recovery.''')
-    print("region es"+sess.region_name)
+    
     continuar = input("Estas listo para continuar (Y/N):")
     if continuar == 'Y':
         print("\n Muy bien ahora crearemos los permisos basicos")
@@ -222,8 +224,6 @@ if __name__ == '__main__':
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             molith_infra(vpcid,trafic_port,trafic_origin)
-            #f.write('\n: '+ failbackKeys['AccessKey']['SecretAccessKey'])
-
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
