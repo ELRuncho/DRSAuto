@@ -86,7 +86,7 @@ def describe_vpc(tag, tag_value, max_items=6):
                                 'Values': [tag_value]
                             },
                         ],
-                        MaxResults = max_items
+                        #MaxResults = max_items
                     )
     except ClientError as error:
         print("Error al describir la vpc: ", error)
@@ -181,7 +181,7 @@ if __name__ == '__main__':
             selectedvpc=describe_vpc('NAME','NABPVPC')
         elif vpc_option=="ESPECIFICA":
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
-            selectedvpc=describe_vpc('NAME','NABPVPC')
+            selectedvpc=describe_vpc('NAME',tag_value)
 
         print(selectedvpc)
         print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
