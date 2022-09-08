@@ -74,7 +74,7 @@ def check_vpc_value(prompt):
     return value
 
 
-def describe_vpc(tag, tag_value, max_items=6):
+def describe_vpc(tag, tag_value):
     """
         Provides info on a VPC
     """
