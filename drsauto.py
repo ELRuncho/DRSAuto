@@ -53,7 +53,6 @@ def drsusers():
             f.write('\nDRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
             f.write('\nFailback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
             f.write('\nFailback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
-            print()
     except FileNotFoundError:
         print('Error')
 
@@ -111,6 +110,14 @@ if __name__ == '__main__':
         drsusers()
         time.sleep(2)
         print("\nPermisos basicos creados")
+        print("\nRecuerda que para desplegar tu DR te recomendamos tener una VPC con subredes publicas y privadas")
+
+        vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT):")
+
+        if vpc_option == "DEFAULT":
+            describe_vpc('NAME','NABPVPC')
+        elif vpc_option=="ESPECIFICA":
+            tag_value=input("Cual es el nombre de la VPC que quieres usar")
 
         print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
 
@@ -148,16 +155,14 @@ if __name__ == '__main__':
         appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3):"))
 
         if appstyle==1:
-
+            molith_infra()
+        elif appstyle==2:
+            front_back_infra()
+        elif appstyle==3:
+            three_tier_infra()
 
         print("\nAhora crearemos el replication settings template")
         time.sleep(1)
-        vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT):")
-
-        if vpc_option == "DEFAULT":
-            describe_vpc('NAME','NABPVPC')
-
-
 
 
         # looking for NABPVPC's
