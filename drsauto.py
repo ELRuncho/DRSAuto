@@ -110,7 +110,7 @@ if __name__ == '__main__':
     if continuar == 'Y':
         print("\n Muy bien ahora crearemos los permisos basicos")
         drsusers()
-        time.sleep(2)
+        time.sleep(1)
         print("\nPermisos basicos creados")
         print("\nRecuerda que para desplegar tu DR te recomendamos tener una VPC con subredes publicas y privadas")
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                 |  Database  |  
                 |____________| 
         """)
-        time.sleep(2)
+        time.sleep(1)
         print("""
             2)
                 ____________          ____________       
@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 |            |        | Database   |
                 |____________|        |____________|
         """)
-        time.sleep(2)
+        time.sleep(1)
         print("""
             3)
                 ____________          ____________          ___________      
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 |            |        |            |        |           |
                 |____________|        |____________|        |___________|
         """)
-        time.sleep(2)
+        time.sleep(1)
 
         appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3): "))
 
