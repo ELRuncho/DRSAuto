@@ -222,7 +222,7 @@ if __name__ == '__main__':
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             molith_infra(vpcid,trafic_port,trafic_origin)
-            f.write('\n: '+ failbackKeys['AccessKey']['SecretAccessKey'])
+            #f.write('\n: '+ failbackKeys['AccessKey']['SecretAccessKey'])
 
         elif appstyle==2:
             front_back_infra()
