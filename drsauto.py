@@ -140,8 +140,9 @@ def add_ingress_rule(security_group_id,port,ipRange):
 
 def molith_infra(vpc,port,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
-    ingressrule=add_ingress_rule(monolith_sec_group.GroupId,port,trafic_origin)
+    add_ingress_rule(monolith_sec_group.GroupId,port,trafic_origin)
     #egressrule
+    pass
 
 
 def front_back_infra(vpc):
@@ -163,6 +164,7 @@ if __name__ == '__main__':
         |_____/|_|  \_\_____/  /_/    \_\____/   |_|  \____/ 
         """)
     print('''\nBienvenido al script para automatizar Elastic Disaster Recovery.''')
+    print("region es"+sess.region_name)
     continuar = input("Estas listo para continuar (Y/N):")
     if continuar == 'Y':
         print("\n Muy bien ahora crearemos los permisos basicos")
@@ -220,6 +222,8 @@ if __name__ == '__main__':
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             molith_infra(vpcid,trafic_port,trafic_origin)
+            f.write('\n: '+ failbackKeys['AccessKey']['SecretAccessKey'])
+
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
