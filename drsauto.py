@@ -46,7 +46,7 @@ def drsusers():
 
 
     DRSAgentKeys = iamclient.create_access_key(UserName='DRSAgentUser')
-    failbackKeys = iamclient.create_access_key(UserName='failback')
+    failbackKeys = iamclient.create_access_key(UserName='drsfailback')
     try:
         with open('config.txt','w') as f:
             f.write('DRSAgentUser access keys: '+ DRSAgentKeys['AccessKey']['AccessKeyId'])
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         """)
         time.sleep(2)
 
-        appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3):"))
+        appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3): "))
 
         if appstyle==1:
             molith_infra()
