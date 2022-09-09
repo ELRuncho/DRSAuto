@@ -154,8 +154,6 @@ def front_back_infra(vpc):
 def three_tier_infra(vpc):
     pass
 
-print("\nAhora debes instalar los ")
-
 if __name__ == '__main__':
 
     print("""
@@ -184,7 +182,6 @@ if __name__ == '__main__':
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
             selectedvpc=describe_vpc(tag_value)
 
-        print(selectedvpc)
         print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
 
         print("""
