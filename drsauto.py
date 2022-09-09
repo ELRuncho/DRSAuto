@@ -74,37 +74,24 @@ def check_vpc_value(prompt):
     return value
 
 
-def describe_vpc(tag, tag_value):
+def describe_vpc(tag_value):
     """
         Provides info on a VPC
     """
     try:
-        paginator = ec2_client.get_paginator('describe_vpcs')
-
-        response_iterator= paginator.paginate(
-            Filters=[{
-                'Name':f'tag:{tag}',
-                'Values':[tag_value]
-            }],
-            PaginationConfig={'MaxItem':10}
-        )
-        fullresult=response_iterator.build_full_result()
-        vpcList=[]
-        for page in fullresult['Vpcs']:
-            vpcList.append(page)
-        #response = ec2_client.describe_vpcs(
-        #                Filters=[
-        #                    {
-        #                        'Name':f'tag:{tag}',
-        #                        'Values': [tag_value]
-        #                    },
-        #                ],
-        #                #MaxResults = max_items
-        #            )
+        response = ec2_client.describe_vpcs(
+                        Filters=[
+                            {
+                                'Name':'tag:Name',
+                                'Values': [tag_value]
+                            },
+                        ],
+                        #MaxResults = max_items
+                    )
     except ClientError as error:
         print("Error al describir la vpc: ", error)
     else:
-        return vpcList #response
+        return response
 
 def create_security_group(description,groupname,vpc_id):
     """
@@ -191,10 +178,10 @@ if __name__ == '__main__':
         vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT): ")
 
         if vpc_option == "DEFAULT":
-            selectedvpc=describe_vpc('NAME','NABPVPC')
+            selectedvpc=describe_vpc('NABPVPC')
         elif vpc_option=="ESPECIFICA":
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
-            selectedvpc=describe_vpc('NAME',tag_value)
+            selectedvpc=describe_vpc(tag_value)
 
         print(selectedvpc)
         print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
