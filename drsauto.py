@@ -142,7 +142,7 @@ def add_ingress_rule(security_group_id,port,ipRange):
 
 def molith_infra(vpc,port,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
-    add_ingress_rule(monolith_sec_group.GroupId,port,trafic_origin)
+    add_ingress_rule(monolith_sec_group['GroupId'],port,trafic_origin)
     #egressrule
     pass
 
