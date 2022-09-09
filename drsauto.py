@@ -220,7 +220,7 @@ if __name__ == '__main__':
         appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3): "))
 
         if appstyle==1:
-            vpcid=selectedvpc[0]["VpcId"]
+            vpcid=selectedvpc['Vpcs'][0]['VpcId']
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             molith_infra(vpcid,trafic_port,trafic_origin)
