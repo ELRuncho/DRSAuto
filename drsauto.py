@@ -79,19 +79,32 @@ def describe_vpc(tag, tag_value):
         Provides info on a VPC
     """
     try:
-        response = ec2_client.describe_vpcs(
-                        Filters=[
-                            {
-                                'Name':f'tag:{tag}',
-                                'Values': [tag_value]
-                            },
-                        ],
-                        #MaxResults = max_items
-                    )
+        paginator = ec2_client.get_paginator('describe_vpcs')
+
+        response_iterator= paginator.paginate(
+            Filters=[{
+                'Name':f'tag:{tag}',
+                'Values':[tag_value]
+            }],
+            PaginationConfig={'MaxItem':10}
+        )
+        fullresult=response_iterator.build_full_result()
+        vpcList=[]
+        for page in fullresult['Vpcs']:
+            vpcList.append(page)
+        #response = ec2_client.describe_vpcs(
+        #                Filters=[
+        #                    {
+        #                        'Name':f'tag:{tag}',
+        #                        'Values': [tag_value]
+        #                    },
+        #                ],
+        #                #MaxResults = max_items
+        #            )
     except ClientError as error:
         print("Error al describir la vpc: ", error)
     else:
-        return response
+        return vpcList #response
 
 def create_security_group(description,groupname,vpc_id):
     """
