@@ -123,7 +123,7 @@ def create_security_group(description,groupname,vpc_id):
     else:
         return response
 
-def add_ingress_rule(security_group_id,port,ipRange):
+def add_ingress_rule(security_group_id,port,protocol,ipRange):
     """
         Creates a SG ingres rule 
     """
@@ -132,7 +132,8 @@ def add_ingress_rule(security_group_id,port,ipRange):
                                                                 GroupId=security_group_id,
                                                                 CidrIp=ipRange,
                                                                 FromPort=port,
-                                                                ToPort=port
+                                                                ToPort=port,
+                                                                IpProtocol=protocol
                                                             )
     except ClientError as error:
         print('Error al crear la regla de ingreso', error)
@@ -140,9 +141,9 @@ def add_ingress_rule(security_group_id,port,ipRange):
         return response
     
 
-def molith_infra(vpc,port,trafic_origin):
+def molith_infra(vpc,port,trafic_origin,protocol):
     monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
-    add_ingress_rule(monolith_sec_group['GroupId'],port,trafic_origin)
+    add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
     #egressrule
     pass
 
@@ -222,8 +223,9 @@ if __name__ == '__main__':
         if appstyle==1:
             vpcid=selectedvpc['Vpcs'][0]['VpcId']
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
+            trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp)")
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
-            molith_infra(vpcid,trafic_port,trafic_origin)
+            molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
