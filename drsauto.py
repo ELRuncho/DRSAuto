@@ -53,17 +53,32 @@ def drsusers():
     failbackKeys = iamclient.create_access_key(UserName='drsfailback')
     try:
         with open('config.txt','w') as f:
-            f.write('DRSAgentUser access keys: '+ DRSAgentKeys['AccessKey']['AccessKeyId'])
+            f.write('Aqui encontraras los pasos para configurar el agente de replicacion de DRS y otros recursos que necesites configurar en premisas')
+            f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+            f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+            f.write('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-installer-init.py')
+            f.write('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+            f.write('\n*----------------------------Estas son las credenciales para que el agente de replicacion se conecte con AWS--------------------------------------------------------------*')
+            f.write('\nDRSAgentUser access keys: '+ DRSAgentKeys['AccessKey']['AccessKeyId'])
             f.write('\nDRSAgentUser secret keys: '+ DRSAgentKeys['AccessKey']['SecretAccessKey'])
             f.write('\nFailback user access keys: '+ failbackKeys['AccessKey']['AccessKeyId'])
             f.write('\nFailback user secret keys: '+ failbackKeys['AccessKey']['SecretAccessKey'])
-            f.write('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-installer-init.py')
-            f.write('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+            f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+            f.write('\nPara instalar el agente de DRS en LINUX, una vez descargado, debes correr el siguiente comando: ')
+            f.write('\nsudo python aws-replcation-installer-init.py')
+            f.write('\nPara instalar el agente de DRS en WINDOWS, una vez descargado, ejecuta el archivo : ')
+            f.write('\nAwsReplicationWindowsInstaller.exe')
+            f.write('\nSigue los prompts y usa las llaves de el DRSAgentUser que aparecen mas arriba')
     except FileNotFoundError:
         print('Error')
 
-#checks for valid value on vpc input
-def check_vpc_value(prompt):
+
+def check_input_value(prompt,proper_values):
+    """
+        Checks for valid input
+    """
     while True:
         value=input(prompt)
         if value not in ("DEFAULT","ESPECIFICA"):
@@ -174,13 +189,19 @@ if __name__ == '__main__':
         print("\nPermisos basicos creados")
         print("\nRecuerda que para desplegar tu DR te recomendamos tener una VPC con subredes publicas y privadas")
 
-        vpc_option = check_vpc_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT): ")
+        vpc_option = check_input_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT): ",('ESPECIFICA','DEFAULT'))
 
         if vpc_option == "DEFAULT":
             selectedvpc=describe_vpc('NABPVPC')
         elif vpc_option=="ESPECIFICA":
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
             selectedvpc=describe_vpc(tag_value)
+        
+        public_or_private_connection=check_input_value("Deseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (publica/privada): ",('publica','privada'))
+        if public_or_private_connection=='privada':
+            public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
+        else:
+            print("Se usaran internet publicas para realizar la replicacion.\nElastic ")
 
         print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
 
@@ -222,13 +243,12 @@ if __name__ == '__main__':
             |__________________|  |__________________|  |_________________|
         """)
         time.sleep(1)
-
-        appstyle=int(input("Selecciona el tipo que mas se te acomoda (1, 2 o 3): "))
+        appstyle= int(check_input_value("Selecciona el tipo que mas se te acomoda (1, 2 o 3): ",('1','2','3')))
 
         if appstyle==1:
             vpcid=selectedvpc['Vpcs'][0]['VpcId']
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
-            trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp)")
+            trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp): ")
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
         elif appstyle==2:
