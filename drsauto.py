@@ -130,9 +130,9 @@ def find_staging_subnet(vpcid):
                     'Values':[item]
                 }]
             )
-            print(routetable)
+            print(routetable,"fin routetable")
             routes=routetable['RouteTables'][0]['Routes']
-            print(routes)
+            print(routes,"fin routes")
             unitresults=[]
             for tables in routes:
                 print(tables)
