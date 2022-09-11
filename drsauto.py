@@ -317,7 +317,7 @@ if __name__ == '__main__':
             ruleID=random.randint(100,9999)
             print("\nAhora crearemos el replication settings template")
             drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {0} --default-large-staging-disk-type GP2 --ebs-encryption DEFAULT --pit-policy enabled=True,interval=7,retentionDuration=7,ruleID={1} --replication-server-instance-type t3.small --staging-area-subnet-id {2} --no-use-dedicated-replication-server'.format(public_or_private_connection,ruleID,staging_subnet)
-            push=subprocess.run(drscmd)
+            push=subprocess.run(['aws','drs','create-replication-configuration-template','--associate-default-security-group','--create-public-ip','--data-plane-routing',public_or_private_connection,'--default-large-staging-disk-type','GP2','--ebs-encryption','DEFAULT','--pit-policy','enabled=True,','interval=7,','retentionDuration=7,','ruleID=549876516','--replication-server-instance-type','t3.small','--staging-area-subnet-id',staging_subnet,'--no-use-dedicated-replication-server'])
             print(push.returncode)
             with open('config.txt','w') as f:
                 f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
