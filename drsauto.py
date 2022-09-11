@@ -108,6 +108,59 @@ def describe_vpc(tag_value):
     else:
         return response
 
+def find_staging_subnet(vpcid):
+    """
+        Looks for a public subnet for staging environmet
+    """
+    try:
+        subnets=ec2_client.describe_subnets(
+            Filters=[{
+                'Name': 'vpc-id',
+                'Values':[vpcid]
+            }]
+        )
+        subnet_ids = [sn['SubnetId'] for sn in subnets['Subnets']]
+        publicsubs=[]
+        privatesubs=[]
+        for item in subnet_ids:
+            routetable=ec2_client.describe_route_tables(
+                Filters=[{
+                    'Name':'association.subnet-id',
+                    'Values':[item]
+                }]
+            )
+
+            routes=routetable['RouteTables'][0]['Routes']
+            unitresults=[]
+            for tables in routes:
+                mode=tables['GatewayId']
+                if 'igw' in mode:
+                    unitresults.append('public')
+                else:
+                    unitresults.append('private')
+            
+            if 'public' in unitresults:
+                publicsubs.append(item)
+            else:
+                privatesubs.append(item)
+
+        response={'PublicSN':publicsubs,'PrivateSN':privatesubs}
+
+    except ClientError as error:
+        print("Error al describir la subred: ",error)
+    else:
+        return response
+
+#def find_private_staging_subnet(vpcid):
+#    """
+#        Looks for a private subnet for staging environmet
+#    """
+
+#   try:
+
+#    except:
+#    else:
+
 def create_security_group(description,groupname,vpc_id):
     """
         Creates a security Group
@@ -161,7 +214,7 @@ def molith_infra(vpc,port,protocol,trafic_origin):
     add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
 
     #egressrule
-    pass
+    return monolith_sec_group['GroupId']
 
 
 def front_back_infra(vpc):
@@ -198,8 +251,8 @@ if __name__ == '__main__':
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
             selectedvpc=describe_vpc(tag_value)
         
-        public_or_private_connection=check_input_value("Deseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (publica/privada): ",('publica','privada'))
-        if public_or_private_connection=='privada':
+        public_or_private_connection=check_input_value("Deseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (PUBLIC_IP/PRIVATE_IP): ",('PUBLIC_IP','PRIVATE_IP'))
+        if public_or_private_connection=='PRIVATE_IP':
             public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
         else:
             print("Se usaran internet publicas para realizar la replicacion.\nElastic ")
@@ -251,8 +304,14 @@ if __name__ == '__main__':
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
             trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp): ")
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
-            molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
-            drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {} --default-large-staging-disk-type GP3 --ebs-encryption DEFAULT'
+            monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
+            if public_or_private_connection == 'PUBLIC_IP':
+                staging_subnet=find_staging_subnet(vpcid)
+                staging_subnet['PublicSN'][0]
+            else:
+                staging_subnet=find_staging_subnet(vpcid)
+                staging_subnet=staging_subnet['PrivateSN'][0]
+            drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {0} --default-large-staging-disk-type GP3 --ebs-encryption DEFAULT --pit-policy enabled=True,interval=7,retentionDuration=7,ruleID={1} --replication-server-instance-type t3.small --staging-area-subnet-id {2} --no-use-dedicated-replication-server'.format(public_or_private_connection,1354,)
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
