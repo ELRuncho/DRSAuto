@@ -1,6 +1,7 @@
 import time
 import boto3
 from botocore.exceptions import ClientError
+import random
 import subprocess
 
 
@@ -133,6 +134,7 @@ def find_staging_subnet(vpcid):
             routes=routetable['RouteTables'][0]['Routes']
             unitresults=[]
             for tables in routes:
+                print(tables)
                 mode=tables['GatewayId']
                 if 'igw' in mode:
                     unitresults.append('public')
@@ -311,7 +313,15 @@ if __name__ == '__main__':
             else:
                 staging_subnet=find_staging_subnet(vpcid)
                 staging_subnet=staging_subnet['PrivateSN'][0]
-            drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {0} --default-large-staging-disk-type GP3 --ebs-encryption DEFAULT --pit-policy enabled=True,interval=7,retentionDuration=7,ruleID={1} --replication-server-instance-type t3.small --staging-area-subnet-id {2} --no-use-dedicated-replication-server'.format(public_or_private_connection,1354,)
+            ruleID=random.randint(100,9999)
+            drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {0} --default-large-staging-disk-type GP3 --ebs-encryption DEFAULT --pit-policy enabled=True,interval=7,retentionDuration=7,ruleID={1} --replication-server-instance-type t3.small --staging-area-subnet-id {2} --no-use-dedicated-replication-server'.format(public_or_private_connection,ruleID,staging_subnet)
+            with open('config.txt','w') as f:
+                f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+                f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
+                f.write('\nConfiguracion para el launch template:')
+                f.write('\nsecurity group id for your server: '+monolithSG)
+
+
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
