@@ -1,4 +1,3 @@
-from asyncio.windows_utils import Popen
 import time
 import boto3
 from botocore.exceptions import ClientError
