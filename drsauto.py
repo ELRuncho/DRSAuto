@@ -81,7 +81,7 @@ def check_input_value(prompt,proper_values):
     """
     while True:
         value=input(prompt)
-        if value not in ("DEFAULT","ESPECIFICA"):
+        if value not in proper_values:
             print("Opcion invalida")
         else:
             break
@@ -159,6 +159,7 @@ def add_ingress_rule(security_group_id,port,protocol,ipRange):
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
     add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
+
     #egressrule
     pass
 
@@ -251,6 +252,7 @@ if __name__ == '__main__':
             trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp): ")
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
+            drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {} --default-large-staging-disk-type GP3 --ebs-encryption DEFAULT'
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
