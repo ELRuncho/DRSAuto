@@ -1,3 +1,4 @@
+from asyncio.windows_utils import Popen
 import time
 import boto3
 from botocore.exceptions import ClientError
@@ -130,15 +131,12 @@ def find_staging_subnet(vpcid):
                     'Values':[item]
                 }]
             )
-            print(routetable,"fin routetable")
             routes=routetable['RouteTables'][0]['Routes']
-            print(routes,"fin routes")
             unitresults=[]
             
             for tables in routes:
                 key='GatewayId'
                 if key in tables:
-                    print(tables,"after evaluating key")
                     mode=tables['GatewayId']
                     if 'igw' in mode:
                         unitresults.append('public')
@@ -318,7 +316,10 @@ if __name__ == '__main__':
                 staging_subnet=find_staging_subnet(vpcid)
                 staging_subnet=staging_subnet['PrivateSN'][0]
             ruleID=random.randint(100,9999)
+            print("\nAhora crearemos el replication settings template")
             drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {0} --default-large-staging-disk-type GP3 --ebs-encryption DEFAULT --pit-policy enabled=True,interval=7,retentionDuration=7,ruleID={1} --replication-server-instance-type t3.small --staging-area-subnet-id {2} --no-use-dedicated-replication-server'.format(public_or_private_connection,ruleID,staging_subnet)
+            push=subprocess,Popen(drscmd,shell=True,stdout=subprocess.PIPE)
+            print(push.returncode)
             with open('config.txt','w') as f:
                 f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
                 f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
@@ -331,7 +332,7 @@ if __name__ == '__main__':
         elif appstyle==3:
             three_tier_infra()
 
-        print("\nAhora crearemos el replication settings template")
+        
         time.sleep(1)
 
 
