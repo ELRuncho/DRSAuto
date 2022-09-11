@@ -310,7 +310,7 @@ if __name__ == '__main__':
             monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
             if public_or_private_connection == 'PUBLIC_IP':
                 staging_subnet=find_staging_subnet(vpcid)
-                staging_subnet['PublicSN'][0]
+                staging_subnet=staging_subnet['PublicSN'][0]
             else:
                 staging_subnet=find_staging_subnet(vpcid)
                 staging_subnet=staging_subnet['PrivateSN'][0]
