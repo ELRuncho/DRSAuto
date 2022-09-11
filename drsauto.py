@@ -257,9 +257,9 @@ if __name__ == '__main__':
         if public_or_private_connection=='PRIVATE_IP':
             public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
         else:
-            print("Se usaran internet publicas para realizar la replicacion.\nElastic ")
+            print("Se usaran internet publicas para realizar la replicacion.")
 
-        print("Como se ve la arquitectura a la que quieres crearle un DR?\n")
+        print("\nComo se ve la arquitectura a la que quieres crearle un DR?\n")
 
         print("""
             1)   __________________
