@@ -134,13 +134,16 @@ def find_staging_subnet(vpcid):
             routes=routetable['RouteTables'][0]['Routes']
             print(routes,"fin routes")
             unitresults=[]
+            
             for tables in routes:
-                print(tables)
-                mode=tables['GatewayId']
-                if 'igw' in mode:
-                    unitresults.append('public')
-                else:
-                    unitresults.append('private')
+                key='GatewayId'
+                if key in tables:
+                    print(tables,"after evaluating key")
+                    mode=tables['GatewayId']
+                    if 'igw' in mode:
+                        unitresults.append('public')
+                    else:
+                        unitresults.append('private')
             
             if 'public' in unitresults:
                 publicsubs.append(item)
