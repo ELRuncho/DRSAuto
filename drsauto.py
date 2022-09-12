@@ -216,15 +216,23 @@ def add_ingress_rule(security_group_id,port,protocol,ipRange):
 def add_egress_rule(security_group_id,port,protocol,ipRange):
     """
         Creates a SG ingres rule 
-    """
-    try:
-        response=ec2_client.authorize_security_group_egress(
-                                                                GroupId=security_group_id,
-                                                                CidrIp=ipRange,
+        CidrIp=ipRange,
                                                                 FromPort=port,
                                                                 ToPort=port,
                                                                 IpProtocol=protocol
-                                                            )
+    """
+    try:
+        response=ec2_client.authorize_security_group_egress(
+                                                            GroupId=security_group_id,
+                                                            IpPermissions=[{
+                                                                'FromPort':port,
+                                                                'ToPort':port,
+                                                                'IpProtocol':protocol,
+                                                                'IpRanges':[{
+                                                                    'CidrIp':ipRange
+                                                                }]
+                                                            }]
+                                                        )
     except ClientError as error:
         print('Error al crear la regla de ingreso', error)
     else:
