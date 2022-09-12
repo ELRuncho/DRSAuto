@@ -340,9 +340,10 @@ if __name__ == '__main__':
             "aws drs create-replication-configuration-template --associate-default-security-group --bandwidth-throttling 500  --create-public-ip --data-plane-routing PUBLIC_IP --default-large-staging-disk-type GP2 --ebs-encryption DEFAULT --pit-policy enabled=true,interval=7,retentionDuration=7,ruleID=549816584,units=DAY --replication-server-instance-type t3.small --replication-servers-security-groups-ids sg-05755909db7d7024b  --staging-area-subnet-id subnet-0407a4de5b9ac2b22 --no-use-dedicated-replication-server --staging-area-tags Creator=DRSAuto,Project=DRSAuto"
             
             replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
-            add_ingress_rule(replicationServersSG,1500,'tcp','0.0.0.0/0')
-            add_egress_rule(replicationServersSG,53,'udp','0.0.0.0/0')
-            add_egress_rule(replicationServersSG,443,'tcp','0.0.0.0/0')
+            replicationSGID=replicationServersSG['GroupId']
+            add_ingress_rule(replicationSGID,1500,'tcp','0.0.0.0/0')
+            add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
+            add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             
             try:
                 drs.create_replication_configuration_template(
@@ -363,7 +364,7 @@ if __name__ == '__main__':
                     ],
                     replicationServerInstanceType='t3.small',
                     replicationServersSecurityGroupsIDs=[
-                        replicationServersSG['GroupId'],
+                        replicationSGID,
                     ],
                     stagingAreaSubnetId=staging_subnet,
                     stagingAreaTags={
