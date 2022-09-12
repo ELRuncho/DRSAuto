@@ -362,9 +362,9 @@ if __name__ == '__main__':
                     ebsEncryption='DEFAULT',
                     pitPolicy=[
                         {
-                            'enabled': True,
-                            'interval': 7,
-                            'retentionDuration': 7,
+                            'enabled':True,
+                            'interval':1,
+                            'retentionDuration':1,
                             'units': 'DAY'
                         },
                     ],
