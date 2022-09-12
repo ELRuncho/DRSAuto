@@ -2,13 +2,14 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 import random
-import subprocess
+
 
 
 sess = boto3.Session(profile_name='default')
 iamclient = sess.client('iam')
 ec2_client= sess.client('ec2')
 ec2 = sess.resource('ec2')
+drs= sess.client('drs')
 
 #creates DRS necesary users
 def drsusers():
@@ -212,6 +213,23 @@ def add_ingress_rule(security_group_id,port,protocol,ipRange):
         return response
     
 
+def add_egress_rule(security_group_id,port,protocol,ipRange):
+    """
+        Creates a SG ingres rule 
+    """
+    try:
+        response=ec2_client.authorize_security_group_egress(
+                                                                GroupId=security_group_id,
+                                                                CidrIp=ipRange,
+                                                                FromPort=port,
+                                                                ToPort=port,
+                                                                IpProtocol=protocol
+                                                            )
+    except ClientError as error:
+        print('Error al crear la regla de ingreso', error)
+    else:
+        return response
+
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
     add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
@@ -311,14 +329,53 @@ if __name__ == '__main__':
             if public_or_private_connection == 'PUBLIC_IP':
                 staging_subnet=find_staging_subnet(vpcid)
                 staging_subnet=staging_subnet['PublicSN'][0]
+                create_public=True
             else:
                 staging_subnet=find_staging_subnet(vpcid)
                 staging_subnet=staging_subnet['PrivateSN'][0]
+                create_public=False
+
             ruleID=random.randint(100,9999)
             print("\nAhora crearemos el replication settings template")
-            drscmd='aws drs create-replication-configuration-template --associate-default-security-group --create-public-ip --data-plane-routing {0} --default-large-staging-disk-type GP2 --ebs-encryption DEFAULT --pit-policy enabled=True,interval=7,retentionDuration=7,ruleID={1} --replication-server-instance-type t3.small --staging-area-subnet-id {2} --no-use-dedicated-replication-server'.format(public_or_private_connection,ruleID,staging_subnet)
-            push=subprocess.run(['aws','drs','create-replication-configuration-template','--associate-default-security-group','--create-public-ip','--data-plane-routing',public_or_private_connection,'--default-large-staging-disk-type','GP2','--ebs-encryption','DEFAULT','--pit-policy','enabled=True,','interval=7,','retentionDuration=7,','ruleID=549876516','--replication-server-instance-type','t3.small','--staging-area-subnet-id',staging_subnet,'--no-use-dedicated-replication-server'])
-            print(push.returncode)
+            "aws drs create-replication-configuration-template --associate-default-security-group --bandwidth-throttling 500  --create-public-ip --data-plane-routing PUBLIC_IP --default-large-staging-disk-type GP2 --ebs-encryption DEFAULT --pit-policy enabled=true,interval=7,retentionDuration=7,ruleID=549816584,units=DAY --replication-server-instance-type t3.small --replication-servers-security-groups-ids sg-05755909db7d7024b  --staging-area-subnet-id subnet-0407a4de5b9ac2b22 --no-use-dedicated-replication-server --staging-area-tags Creator=DRSAuto,Project=DRSAuto"
+            
+            replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
+            add_ingress_rule(replicationServersSG,1500,'tcp','0.0.0.0/0')
+            add_egress_rule(replicationServersSG,53,'udp','0.0.0.0/0')
+            add_egress_rule(replicationServersSG,443,'tcp','0.0.0.0/0')
+            
+            try:
+                drs.create_replication_configuration_template(
+                    associateDefaultSecurityGroup=True,
+                    bandwidthThrottling=500,
+                    createPublicIP=create_public,
+                    dataPlaneRouting=public_or_private_connection,
+                    defaultLargeStagingDiskType='GP3',
+                    ebsEncryption='DEFAULT',
+                    pitPolicy=[
+                        {
+                            'enabled': True,
+                            'interval': 7,
+                            'retentionDuration': 7,
+                            'ruleID': ruleID,
+                            'units': 'DAY'
+                        },
+                    ],
+                    replicationServerInstanceType='t3.small',
+                    replicationServersSecurityGroupsIDs=[
+                        replicationServersSG['GroupId'],
+                    ],
+                    stagingAreaSubnetId=staging_subnet,
+                    stagingAreaTags={
+                        'Cretor': 'DRSAuto'
+                    },
+                    useDedicatedReplicationServer=False
+                )
+            except ClientError as error:
+                print('\nError al crear replication template: ',error)
+            else:
+                print('\nReplication template creado exitosamente')
+            
             with open('config.txt','w') as f:
                 f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
                 f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
