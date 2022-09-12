@@ -76,6 +76,14 @@ def drsusers():
     except FileNotFoundError:
         print('Error')
 
+    users={
+            'DRSAgentAccessKey':DRSAgentKeys['AccessKey']['AccessKeyId'],
+            'DRSAgentSecret':DRSAgentKeys['AccessKey']['SecretAccessKey'],
+            'FailbackKey':failbackKeys['AccessKey']['AccessKeyId'],
+            'FailbackSecret':failbackKeys['AccessKey']['SecretAccessKey']
+          }
+    return users
+
 
 def check_input_value(prompt,proper_values):
     """
@@ -267,7 +275,7 @@ if __name__ == '__main__':
     continuar = input("Estas listo para continuar (Y/N):")
     if continuar == 'Y':
         print("\n Muy bien ahora crearemos los permisos basicos")
-        drsusers()
+        keys=drsusers()
         time.sleep(1)
         print("\nPermisos basicos creados")
         print("\nRecuerda que para desplegar tu DR te recomendamos tener una VPC con subredes publicas y privadas")
@@ -285,9 +293,9 @@ if __name__ == '__main__':
             public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
         else:
             print("Se usaran internet publicas para realizar la replicacion.")
-
+        time.sleep(1)
         print("\nComo se ve la arquitectura a la que quieres crearle un DR?\n")
-
+        time.sleep(1)
         print("""
             1)   __________________
                 |DMZ               |
@@ -334,6 +342,18 @@ if __name__ == '__main__':
             trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp): ")
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
+            #rsaKey=ec2_client.create_key_pair(
+            #    KeyName='DRSAuto',
+            #    KeyType='rsa',
+            #    KeyFormat='pem'
+            #)# 'KeyMaterial','KeyName
+
+            #try:
+            #    with open('DRSAuto.pem','w') as f:
+            #        f.write(rsaKey['KeyMaterial'])
+            #except FileNotFoundError:
+            #    print('Error escribiendo la llave')  
+
             if public_or_private_connection == 'PUBLIC_IP':
                 staging_subnet=find_staging_subnet(vpcid)
                 staging_subnet=staging_subnet['PublicSN'][0]
@@ -398,12 +418,39 @@ if __name__ == '__main__':
             else:
                 print('\nReplication template creado exitosamente')
             
-            with open('config.txt','w') as f:
-                f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
-                f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
-                f.write('\nConfiguracion para el launch template:')
-                f.write('\nsecurity group id for your server: '+monolithSG)
+            print('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-')
+            print('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            print('\nEs hora de installar el agente el servidores fuente, ingresa los siguientes datos en los prompts:')
+            print('\nRegion: us-east-1')
+            print('\nAccess key: '+ keys['DRSAgentAccessKey'])
+            print('\nSecret key: '+ keys['DRSAgentSecret'])
+            print('\nSi quieres replicar todos los discos solo debes presionar Enter, de lo contario debes definir los discos que quieres replicar')
+            time.sleep(2)
+            print('\nUna vez se complete la instalacion veras el servidor aparecer en source servers en la consola web (https://us-east-1.console.aws.amazon.com/drs/home?region=us-east-1#/sourceServers)')
+            time.sleep(1)
+            print('\nDejanos saber cuando completes la instalacion y aparesca el servidor')
+            time.sleep(1)
+            input('\nPresiona Enter cuando estes listo')
 
+            source_server_id=input('\nProporcionanos el id del servidor: ')
+            drs.update_launch_configuration(
+                sourceServerID=source_server_id,
+                targetInstanceTypeRightSizingMethod='BASIC'
+            )
+
+            instance_launch_config=drs.get_launch_configuration(sourceServerID=source_server_id)
+
+            ec2_client.create_launch_template_version(
+                LaunchTemplateId=instance_launch_config['ec2LaunchTemplateID'],
+                LaunchTemplateData={
+                    'NetworkInterfaces':[{
+                        'AssociatePublicIpAddress': True,
+                        'Groups': [monolithSG]
+                    }],
+                }
+
+            )
+            print('launch template creado')
 
         elif appstyle==2:
             front_back_infra()
