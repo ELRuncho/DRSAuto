@@ -343,7 +343,6 @@ if __name__ == '__main__':
                 staging_subnet=staging_subnet['PrivateSN'][0]
                 create_public=False
 
-            ruleID=random.randint(100,9999)
             print("\nAhora crearemos el replication settings template")
             "aws drs create-replication-configuration-template --associate-default-security-group --bandwidth-throttling 500  --create-public-ip --data-plane-routing PUBLIC_IP --default-large-staging-disk-type GP2 --ebs-encryption DEFAULT --pit-policy enabled=true,interval=7,retentionDuration=7,ruleID=549816584,units=DAY --replication-server-instance-type t3.small --replication-servers-security-groups-ids sg-05755909db7d7024b  --staging-area-subnet-id subnet-0407a4de5b9ac2b22 --no-use-dedicated-replication-server --staging-area-tags Creator=DRSAuto,Project=DRSAuto"
             
@@ -366,7 +365,6 @@ if __name__ == '__main__':
                             'enabled': True,
                             'interval': 7,
                             'retentionDuration': 7,
-                            'ruleID': ruleID,
                             'units': 'DAY'
                         },
                     ],
