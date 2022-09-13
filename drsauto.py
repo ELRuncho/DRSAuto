@@ -1,3 +1,4 @@
+from re import T
 import time
 import boto3
 from botocore.exceptions import ClientError
@@ -341,26 +342,15 @@ if __name__ == '__main__':
             trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
             trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp): ")
             trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
-            monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)
-            #rsaKey=ec2_client.create_key_pair(
-            #    KeyName='DRSAuto',
-            #    KeyType='rsa',
-            #    KeyFormat='pem'
-            #)# 'KeyMaterial','KeyName
-
-            #try:
-            #    with open('DRSAuto.pem','w') as f:
-            #        f.write(rsaKey['KeyMaterial'])
-            #except FileNotFoundError:
-            #    print('Error escribiendo la llave')  
+            monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)  
 
             if public_or_private_connection == 'PUBLIC_IP':
-                staging_subnet=find_staging_subnet(vpcid)
-                staging_subnet=staging_subnet['PublicSN'][0]
+                subnets=find_staging_subnet(vpcid)
+                staging_subnet=subnets['PublicSN'][0]
                 create_public=True
             else:
-                staging_subnet=find_staging_subnet(vpcid)
-                staging_subnet=staging_subnet['PrivateSN'][0]
+                subnets=find_staging_subnet(vpcid)
+                staging_subnet=subnets['PrivateSN'][0]
                 create_public=False
 
             print("\nAhora crearemos el replication settings template")
@@ -445,6 +435,7 @@ if __name__ == '__main__':
                 LaunchTemplateData={
                     'NetworkInterfaces':[{
                         'AssociatePublicIpAddress': True,
+                        'SubnetId':subnets['PublicSN'][1],
                         'Groups': [monolithSG]
                     }],
                 }
@@ -452,20 +443,19 @@ if __name__ == '__main__':
             )
             print('launch template creado')
 
+            ec2_client.modify_launch_template(
+                DefaultVersion='2',
+                LaunchTemplateId=instance_launch_config['ec2LaunchTemplateID'],
+            )
+
+            print('nueva version default')
+
+
+
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
             three_tier_infra()
-
-        
         time.sleep(1)
-
-
-        # looking for NABPVPC's
-
-        # listing NABPVPC's subnets
-
-        # selecting staging subnet
-
     else:
         print("deacuerdo, que tengas un feliz dia")
