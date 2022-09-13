@@ -451,7 +451,6 @@ if __name__ == '__main__':
             print('nueva version default')
 
 
-
         elif appstyle==2:
             front_back_infra()
         elif appstyle==3:
