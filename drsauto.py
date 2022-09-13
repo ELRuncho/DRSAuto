@@ -374,7 +374,7 @@ if __name__ == '__main__':
             
             try:
                 drs.create_replication_configuration_template(
-                    associateDefaultSecurityGroup=True,
+                    associateDefaultSecurityGroup=False,
                     bandwidthThrottling=500,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
