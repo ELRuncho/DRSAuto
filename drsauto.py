@@ -70,7 +70,7 @@ def drsusers():
             f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
             f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
             f.write('\nPara instalar el agente de DRS en LINUX, una vez descargado, debes correr el siguiente comando: ')
-            f.write('\nsudo python aws-replcation-installer-init.py')
+            f.write('\nsudo python aws-replication-installer-init.py')
             f.write('\nPara instalar el agente de DRS en WINDOWS, una vez descargado, ejecuta el archivo : ')
             f.write('\nAwsReplicationWindowsInstaller.exe')
             f.write('\nSigue los prompts y usa las llaves de el DRSAgentUser que aparecen mas arriba')
@@ -435,6 +435,7 @@ if __name__ == '__main__':
                 LaunchTemplateData={
                     'NetworkInterfaces':[{
                         'AssociatePublicIpAddress': True,
+                        'DeviceIndex':0,
                         'SubnetId':subnets['PublicSN'][1],
                         'Groups': [monolithSG]
                     }],
