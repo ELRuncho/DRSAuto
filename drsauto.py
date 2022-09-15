@@ -432,6 +432,14 @@ if __name__ == '__main__':
 
             instance_launch_config=drs.get_launch_configuration(sourceServerID=source_server_id)
 
+            #punto para seleccionar dmz o privada
+            tipored=check_input_value('Tu servidor necesita estar en una dmz o en una subred privada (dmz/privada): ',('dmz','privada'))
+            destsubnet=''
+            if tipored=='dmz':
+                destsubnet=subnets['PublicSN'][1]
+            else:
+                destsubnet=subnets['PrivateSN'][0]
+
             ec2_client.create_launch_template_version(
                 LaunchTemplateId=instance_launch_config['ec2LaunchTemplateID'],
                 LaunchTemplateData={
@@ -452,7 +460,6 @@ if __name__ == '__main__':
             )
 
             print('nueva version default')
-
 
         elif appstyle==2:
             front_back_infra()
