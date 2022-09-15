@@ -164,6 +164,22 @@ def find_staging_subnet(vpcid):
     else:
         return response
 
+def create_route(destination_cidr_block,gateway_id, route_table_id):
+    """
+        Creates a route in a route table
+    """
+    try:
+        response = ec2_client.create_route(
+            DestinationCidrBlock=destination_cidr_block,
+            GatewayId=gateway_id,
+            RouteTableId=route_table_id
+        )
+    except ClientError as error:
+        print('Error al crear la ruta: ',error)
+        raise
+    else:
+        return response
+
 def find_route_tables(vpc_id):
     """
         Describes all route tables in a vpc
@@ -387,6 +403,12 @@ if __name__ == '__main__':
                 ec2_client.create_vpn_connection_route(DestinationCidrBlock=cgw_cidr,VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
                 ec2_client.create_vpn_connection_route(DestinationCidrBlock=selectedvpc['Vpcs'][0]['CidrBlock'],VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
                 routetables=find_route_tables(vpcid)
+
+                for table in routetables:
+                    ec2_client.enable_vgw_route_propagation(
+                        GatewayId=vgw['VpnGateway']['VpnGatewayId'],
+                        RouteTableId=table
+                    )
 
             print("\nAhora crearemos el replication settings template")
             
