@@ -199,7 +199,7 @@ def find_route_tables(vpc_id):
 
         route_tables_list = []
 
-        for page in full_result['ResultTables']:
+        for page in full_result['RouteTables']:
             route_tables_list.append(page['RouteTableId'])
 
     except ClientError as error:
