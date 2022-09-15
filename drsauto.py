@@ -1,4 +1,5 @@
 import time
+from typing import Type
 import boto3
 from botocore.exceptions import ClientError
 import random
@@ -162,6 +163,33 @@ def find_staging_subnet(vpcid):
         print("Error al describir la subred: ",error)
     else:
         return response
+
+def find_route_tables(vpc_id):
+    """
+        Describes all route tables in a vpc
+    """
+
+    try:
+        paginator = ec2_client.get_paginator('describe_route_tables')
+
+        response_iterator = paginator.paginate(
+                                Filters=[{
+                                    'Name':'vpc-id',
+                                    'Values': [vpc_id]
+                                }]
+                            )
+        
+        full_result= response_iterator.build_full_result()
+
+        route_tables_list = []
+
+        for page in full_result['ResultTables']:
+            route_tables_list.append(page['RouteTableId'])
+
+    except ClientError as error:
+        print('Error al listar las tablas: ', error)
+    else:
+        return route_tables_list
 
 def create_security_group(description,groupname,vpc_id):
     """
@@ -354,7 +382,11 @@ if __name__ == '__main__':
                 customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
                 vgw = ec2_client.create_vpn_gateway(Type='ipsec.1')
                 ec2_client.attach_vpn_gateway(VpcId=vpcid,VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'])
-
+                cgw_cidr=input('Ingresa el CIDR de tu red en premisas(X.X.X.X/X): ')
+                vpn_connection=ec2_client.create_vpn_connection(CustomerGatewayId=customergw['CustomerGateway']['CustomerGatewayId'],Type='ipsec.1',VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'],Options={'StaticRoutesOnly':True,'LocalIpv4NetworkCidr':cgw_cidr,'RemoteIpv4NetworkCidr':selectedvpc['Vpcs'][0]['CidrBlock']})
+                ec2_client.create_vpn_connection_route(DestinationCidrBlock=cgw_cidr,VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                ec2_client.create_vpn_connection_route(DestinationCidrBlock=selectedvpc['Vpcs'][0]['CidrBlock'],VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                routetables=find_route_tables(vpcid)
 
             print("\nAhora crearemos el replication settings template")
             
