@@ -1,4 +1,3 @@
-from re import T
 import time
 import boto3
 from botocore.exceptions import ClientError
@@ -164,20 +163,19 @@ def find_staging_subnet(vpcid):
     else:
         return response
 
-#def find_private_staging_subnet(vpcid):
-#    """
-#        Looks for a private subnet for staging environmet
-#    """
-
-#   try:
-
-#    except:
-#    else:
-
 def create_security_group(description,groupname,vpc_id):
     """
         Creates a security Group
     """
+    serial=0
+    SGs=ec2_client.describe_security_groups(Filters=[{'Name':'vpc-id','Values':[vpc_id]}])
+    SGNames=[groups for groups in SGs['SecurityGroups'] if groupname in groups['GroupName']]
+
+    while SGNames:
+        serial+=1
+        groupname=groupname+str(serial)
+        SGNames=[groups for groups in SGs['SecurityGroups'] if groupname in groups['GroupName']]
+
     try:
         response=ec2_client.create_security_group(
                                                     Description=description,
@@ -292,6 +290,7 @@ if __name__ == '__main__':
         public_or_private_connection=check_input_value("Deseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (PUBLIC_IP/PRIVATE_IP): ",('PUBLIC_IP','PRIVATE_IP'))
         if public_or_private_connection=='PRIVATE_IP':
             public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
+            bgpasn=int(input("Cual es el ASN de BGP de tu dispositivo de red en premisas?(default 65000): "))
         else:
             print("Se usaran internet publicas para realizar la replicacion.")
         time.sleep(1)
@@ -339,9 +338,9 @@ if __name__ == '__main__':
 
         if appstyle==1:
             vpcid=selectedvpc['Vpcs'][0]['VpcId']
-            trafic_port=int(input("Cual es el puerto de ingreso de la app: "))
-            trafic_protocol=input("Cual es el protocol ip (tcp, udp o icmp): ")
-            trafic_origin=input("Cual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+            trafic_port=int(input("\nCual es el puerto de ingreso de la app: "))
+            trafic_protocol=input("\nCual es el protocol ip (tcp, udp o icmp): ")
+            trafic_origin=input("\nCual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
             monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)  
 
             if public_or_private_connection == 'PUBLIC_IP':
@@ -350,11 +349,14 @@ if __name__ == '__main__':
                 create_public=True
             else:
                 subnets=find_staging_subnet(vpcid)
-                staging_subnet=subnets['PrivateSN'][0]
+                staging_subnet=subnets['PublicSN'][0]
                 create_public=False
+                customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
+                vgw = ec2_client.create_vpn_gateway(Type='ipsec.1')
+                ec2_client.attach_vpn_gateway(VpcId=vpcid,VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'])
+
 
             print("\nAhora crearemos el replication settings template")
-            "aws drs create-replication-configuration-template --associate-default-security-group --bandwidth-throttling 500  --create-public-ip --data-plane-routing PUBLIC_IP --default-large-staging-disk-type GP2 --ebs-encryption DEFAULT --pit-policy enabled=true,interval=7,retentionDuration=7,ruleID=549816584,units=DAY --replication-server-instance-type t3.small --replication-servers-security-groups-ids sg-05755909db7d7024b  --staging-area-subnet-id subnet-0407a4de5b9ac2b22 --no-use-dedicated-replication-server --staging-area-tags Creator=DRSAuto,Project=DRSAuto"
             
             replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
             replicationSGID=replicationServersSG['GroupId']
