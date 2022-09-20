@@ -595,8 +595,8 @@ if __name__ == '__main__':
             replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
             replicationSGID=replicationServersSG['GroupId']
             add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
-            add_egress_rule(main_security_group_id=replicationSGID,port=53,protocol='udp',ipRange='0.0.0.0/0')
-            add_egress_rule(main_security_group_id=replicationSGID,port=443,protocol='tcp',ipRange='0.0.0.0/0')
+            add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
+            add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
 
             try:
                 drs.create_replication_configuration_template(
