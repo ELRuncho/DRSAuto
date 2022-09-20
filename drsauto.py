@@ -542,7 +542,7 @@ if __name__ == '__main__':
             print('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-')
             print('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
             print("---------------------------------------------------------")
-            print("\nEl comando para correr el instalador es python aws-replication-installer-init.py")
+            print("\nEl comando para correr el instalador en linux es python aws-replication-installer-init.py")
             print('\nEs hora de installar el agente el servidores fuente, ingresa los siguientes datos en los prompts:')
             print('\nRegion: us-east-1')
             print('\nAccess key: '+ keys['DRSAgentAccessKey'])
