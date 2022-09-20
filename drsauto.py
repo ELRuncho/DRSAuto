@@ -327,13 +327,13 @@ def front_back_infra(vpcid):
     trafic_port_server1 = int(input("\nCual es el puerto de ingreso del servidor1: "))
     trafic_protocol_server1 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
     trafic_origin_server1 = input("\nCual es el CIDR que deben tener accesso al servidor1 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
-    server2toserver1port = input("\nCual es el puerto con el que el servidor2 se comunica con el servidor1: ")
+    server2toserver1port = int(input("\nCual es el puerto con el que el servidor2 se comunica con el servidor1: "))
     server2toserver1protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor1:")
 
     trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
     trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
     trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
-    server1toserver2port = input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: ")
+    server1toserver2port = int(input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: "))
     server1toserver2protocol=input("\nCual es el protocolo con el que el servidor1 se comunica con el servidor2:")
 
     server1_sec_group = create_security_group('SG para server1','drsserver1',vpcid)
