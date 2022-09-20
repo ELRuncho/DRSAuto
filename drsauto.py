@@ -316,12 +316,7 @@ def add_egress_rule(security_group_id,port,protocol,ipRange):
 
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito','drsautomonolith',vpc)
-    main_security_group_id=kwargs.get('source_security_group_id',None)
-    ipRange=kwargs.get('ipRange',None)
-    port=kwargs.get('port',None)
-    protocol=kwargs.get('protocol',None)
-    source_security_group_id=kwargs.get('source_security_group_id',None)
-    add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
+    add_ingress_rule(main_source_security_group_id=monolith_sec_group['GroupId'],port=port,protocol=protocol,ipRange=trafic_origin)
 
     #egressrule
     return monolith_sec_group['GroupId']
@@ -331,16 +326,24 @@ def front_back_infra(vpcid):
     trafic_port_server1 = int(input("\nCual es el puerto de ingreso del servidor1: "))
     trafic_protocol_server1 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
     trafic_origin_server1 = input("\nCual es el CIDR que deben tener accesso al servidor1 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    server2toserver1port = input("\nCual es el puerto con el que el servidor2 se comunica con el servidor1: ")
+    server2toserver1protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor1:")
 
     trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
     trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
     trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    server1toserver2port = input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: ")
+    server1toserver2protocol=input("\nCual es el protocolo con el que el servidor1 se comunica con el servidor2:")
 
     server1_sec_group = create_security_group('SG para server1','drsserver1',vpcid)
-    add_ingress_rule(server1_sec_group['GroupId'],trafic_port_server1,trafic_protocol_server1,trafic_origin_server1)
+    add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=trafic_port_server1,protocol=trafic_protocol_server1,ipRange=trafic_origin_server1)
 
     server2_sec_group = create_security_group('SG para server2','drsserver2',vpcid)
-    add_ingress_rule(server2_sec_group['GroupId'],trafic_port_server2,trafic_protocol_server2,trafic_origin_server2)
+    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=trafic_port_server2,protocol=trafic_protocol_server2,ipRange=trafic_origin_server2)
+
+    add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=server2toserver1port,protocol=server2toserver1protocol,source_security_group_id=server2_sec_group['GroupId'])
+    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=server1toserver2port,protocol=server1toserver2protocol,source_security_group_id=server1_sec_group['GroupId'])
+
     pass
 
 def three_tier_infra(vpcid):
