@@ -324,17 +324,28 @@ def molith_infra(vpc,port,protocol,trafic_origin):
 
 
 def front_back_infra(vpcid):
+    print("---------------------------------------------------------")
     trafic_port_server1 = int(input("\nCual es el puerto de ingreso del servidor1: "))
-    trafic_protocol_server1 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
+    print("---------------------------------------------------------")
+    trafic_protocol_server1 = input("\nCual es el protocol ip del servidor1 (tcp, udp o icmp): ")
+    print("---------------------------------------------------------")
     trafic_origin_server1 = input("\nCual es el CIDR que deben tener accesso al servidor1 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    print("---------------------------------------------------------")
     server2toserver1port = int(input("\nCual es el puerto con el que el servidor2 se comunica con el servidor1: "))
+    print("---------------------------------------------------------")
     server2toserver1protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor1:")
+    print("---------------------------------------------------------")
 
     trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
+    print("---------------------------------------------------------")
     trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
+    print("---------------------------------------------------------")
     trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    print("---------------------------------------------------------")
     server1toserver2port = int(input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: "))
+    print("---------------------------------------------------------")
     server1toserver2protocol=input("\nCual es el protocolo con el que el servidor1 se comunica con el servidor2:")
+    print("---------------------------------------------------------")
 
     server1_sec_group = create_security_group('SG para server1','drsserver1',vpcid)
     add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=trafic_port_server1,protocol=trafic_protocol_server1,ipRange=trafic_origin_server1)
@@ -369,6 +380,7 @@ if __name__ == '__main__':
         keys=drsusers()
         time.sleep(1)
         print("\nPermisos basicos creados")
+        print("---------------------------------------------------------")
         print("\nRecuerda que para desplegar tu DR te recomendamos tener una VPC con subredes publicas y privadas")
 
         vpc_option = check_input_value("Para el DR quieres usar una vpc especifica o quieres usar la vpc default del script?(ESPECIFICA/DEFAULT): ",('ESPECIFICA','DEFAULT'))
@@ -378,13 +390,17 @@ if __name__ == '__main__':
         elif vpc_option=="ESPECIFICA":
             tag_value=input("Cual es el nombre de la VPC que quieres usar")
             selectedvpc=describe_vpc(tag_value)
-        
-        public_or_private_connection=check_input_value("Deseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (PUBLIC_IP/PRIVATE_IP): ",('PUBLIC_IP','PRIVATE_IP'))
+        print("---------------------------------------------------------")
+        public_or_private_connection=check_input_value("\nDeseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (PUBLIC_IP/PRIVATE_IP): ",('PUBLIC_IP','PRIVATE_IP'))
+        print("---------------------------------------------------------")
         if public_or_private_connection=='PRIVATE_IP':
             public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
+            print("---------------------------------------------------------")
             bgpasn=int(input("Cual es el ASN de BGP de tu dispositivo de red en premisas?(default 65000): "))
+            print("---------------------------------------------------------")
         else:
             print("Se usaran internet publicas para realizar la replicacion.")
+            print("\n---------------------------------------------------------")
         time.sleep(1)
         print("\nComo se ve la arquitectura a la que quieres crearle un DR?\n")
         time.sleep(1)
@@ -427,12 +443,15 @@ if __name__ == '__main__':
         """)
         time.sleep(1)
         appstyle= int(check_input_value("Selecciona el tipo que mas se te acomoda (1, 2 o 3): ",('1','2','3')))
-
+        print("---------------------------------------------------------")
         if appstyle==1:
             vpcid=selectedvpc['Vpcs'][0]['VpcId']
             trafic_port=int(input("\nCual es el puerto de ingreso de la app: "))
+            print("---------------------------------------------------------")
             trafic_protocol=input("\nCual es el protocol ip (tcp, udp o icmp): ")
+            print("---------------------------------------------------------")
             trafic_origin=input("\nCual es el CIDR que deben tener accesso al servidor (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+            print("---------------------------------------------------------")
             monolithSG=molith_infra(vpcid,trafic_port,trafic_protocol,trafic_origin)  
 
             if public_or_private_connection == 'PUBLIC_IP':
@@ -444,22 +463,30 @@ if __name__ == '__main__':
                 staging_subnet=subnets['PublicSN'][0]
                 create_public=False
                 customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
+                print("-----------------Created customer gateway----------------------")
                 vgw = ec2_client.create_vpn_gateway(Type='ipsec.1')
+                time.sleep(10)
+                print("-----------------Created vpn gatewy----------------")
                 ec2_client.attach_vpn_gateway(VpcId=vpcid,VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'])
+                print("-----------------Attaching vpn gateway----------------------")
+                time.sleep(10)
                 cgw_cidr=input('Ingresa el CIDR de tu red en premisas(X.X.X.X/X): ')
+                print("---------------------------------------------------------")
                 vpn_connection=ec2_client.create_vpn_connection(CustomerGatewayId=customergw['CustomerGateway']['CustomerGatewayId'],Type='ipsec.1',VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'],Options={'StaticRoutesOnly':True,'LocalIpv4NetworkCidr':cgw_cidr,'RemoteIpv4NetworkCidr':selectedvpc['Vpcs'][0]['CidrBlock']})
+                print("-----------------Conecting vpn gateway and ccustomer gateway--------------------")
                 ec2_client.create_vpn_connection_route(DestinationCidrBlock=cgw_cidr,VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
                 ec2_client.create_vpn_connection_route(DestinationCidrBlock=selectedvpc['Vpcs'][0]['CidrBlock'],VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
                 routetables=find_route_tables(vpcid)
+                print("-----------------updating route tables---------------------")
 
                 for table in routetables:
                     ec2_client.enable_vgw_route_propagation(
                         GatewayId=vgw['VpnGateway']['VpnGatewayId'],
                         RouteTableId=table
                     )
-
+            print("---------------------------------------------------------")
             print("\nAhora crearemos el replication settings template")
-            
+            print("---------------------------------------------------------")
             replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
             replicationSGID=replicationServersSG['GroupId']
             add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
@@ -511,14 +538,16 @@ if __name__ == '__main__':
                 print('\nError al crear replication template: ',error)
             else:
                 print('\nReplication template creado exitosamente')
-            
+                print("---------------------------------------------------------")
             print('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-')
             print('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            print("---------------------------------------------------------")
             print('\nEs hora de installar el agente el servidores fuente, ingresa los siguientes datos en los prompts:')
             print('\nRegion: us-east-1')
             print('\nAccess key: '+ keys['DRSAgentAccessKey'])
             print('\nSecret key: '+ keys['DRSAgentSecret'])
             print('\nSi quieres replicar todos los discos solo debes presionar Enter, de lo contario debes definir los discos que quieres replicar')
+            print("---------------------------------------------------------")
             time.sleep(2)
             print('\nUna vez se complete la instalacion veras el servidor aparecer en source servers en la consola web (https://us-east-1.console.aws.amazon.com/drs/home?region=us-east-1#/sourceServers)')
             time.sleep(1)
@@ -526,6 +555,7 @@ if __name__ == '__main__':
             time.sleep(1)
             input('\nPresiona Enter cuando estes listo')
 
+            print("---------------------------------------------------------")
             source_server_id=input('\nProporcionanos el id del servidor: ')
             drs.update_launch_configuration(
                 sourceServerID=source_server_id,
@@ -533,7 +563,7 @@ if __name__ == '__main__':
             )
 
             instance_launch_config=drs.get_launch_configuration(sourceServerID=source_server_id)
-
+            print("---------------------------------------------------------")
             tipored=check_input_value('Tu servidor necesita estar en una dmz o en una subred privada (dmz/privada): ',('dmz','privada'))
             destsubnet=''
             if tipored=='dmz':
@@ -553,13 +583,14 @@ if __name__ == '__main__':
                 }
 
             )
+            print("---------------------------------------------------------")
             print('launch template creado')
 
             ec2_client.modify_launch_template(
                 DefaultVersion='2',
                 LaunchTemplateId=instance_launch_config['ec2LaunchTemplateID'],
             )
-
+            print("---------------------------------------------------------")
             print('nueva version default')
 
         elif appstyle==2:
@@ -574,14 +605,21 @@ if __name__ == '__main__':
                 staging_subnet=subnets['PublicSN'][0]
                 create_public=False
                 customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
+                print("---------------------------------------------------------")
                 vgw = ec2_client.create_vpn_gateway(Type='ipsec.1')
-                time.sleep(5)
+                print("---------------------------------------------------------")
+                time.sleep(10)
                 ec2_client.attach_vpn_gateway(VpcId=vpcid,VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'])
-                time.sleep(5)
+                print("---------------------------------------------------------")
+                time.sleep(10)
                 cgw_cidr=input('Ingresa el CIDR de tu red en premisas(X.X.X.X/X): ')
+                print("---------------------------------------------------------")
                 vpn_connection=ec2_client.create_vpn_connection(CustomerGatewayId=customergw['CustomerGateway']['CustomerGatewayId'],Type='ipsec.1',VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'],Options={'StaticRoutesOnly':True,'LocalIpv4NetworkCidr':cgw_cidr,'RemoteIpv4NetworkCidr':selectedvpc['Vpcs'][0]['CidrBlock']})
+                print("---------------------------------------------------------")
                 ec2_client.create_vpn_connection_route(DestinationCidrBlock=cgw_cidr,VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                print("---------------------------------------------------------")
                 ec2_client.create_vpn_connection_route(DestinationCidrBlock=selectedvpc['Vpcs'][0]['CidrBlock'],VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                print("---------------------------------------------------------")
                 routetables=find_route_tables(vpcid)
 
                 for table in routetables:
@@ -589,9 +627,9 @@ if __name__ == '__main__':
                         GatewayId=vgw['VpnGateway']['VpnGatewayId'],
                         RouteTableId=table
                     )
-
+            print("---------------------------------------------------------")
             print("\nAhora crearemos el replication settings template")
-            
+            print("---------------------------------------------------------")
             replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
             replicationSGID=replicationServersSG['GroupId']
             add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
@@ -642,29 +680,33 @@ if __name__ == '__main__':
             except ClientError as error:
                 print('\nError al crear replication template: ',error)
             else:
+                print("---------------------------------------------------------")
                 print('\nReplication template creado exitosamente')
-
+            print("---------------------------------------------------------")
             print('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-')
             print('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            print("---------------------------------------------------------")
             print('\nEs hora de installar el agente el servidores fuente, ingresa los siguientes datos en los prompts:')
             print('\nRegion: us-east-1')
             print('\nAccess key: '+ keys['DRSAgentAccessKey'])
             print('\nSecret key: '+ keys['DRSAgentSecret'])
             print('\nSi quieres replicar todos los discos solo debes presionar Enter, de lo contario debes definir los discos que quieres replicar')
+            print("---------------------------------------------------------")
             time.sleep(2)
             print('\nUna vez se complete la instalacion veras el servidor aparecer en source servers en la consola web (https://us-east-1.console.aws.amazon.com/drs/home?region=us-east-1#/sourceServers)')
             time.sleep(1)
             print('\nDejanos saber cuando completes la instalacion y aparesca el servidor')
             time.sleep(1)
             input('\nPresiona Enter cuando estes listo')
-
+            print("---------------------------------------------------------")
             source_server1_id=input('\nProporcionanos el id del servidor1: ')
             drs.update_launch_configuration(
                 sourceServerID=source_server1_id,
                 targetInstanceTypeRightSizingMethod='BASIC'
             )
 
-            source_server2_id=input('\nProporcionanos el id del servidor2: ')
+            print("---------------------------------------------------------")
+            source_server2_id=input('\nProporcionanos el id del servidor2: ')   
             drs.update_launch_configuration(
                 sourceServerID=source_server2_id,
                 targetInstanceTypeRightSizingMethod='BASIC'
@@ -672,6 +714,7 @@ if __name__ == '__main__':
             instance_launch_config1=drs.get_launch_configuration(sourceServerID=source_server1_id)
             instance_launch_config2=drs.get_launch_configuration(sourceServerID=source_server1_id)
 
+            print("---------------------------------------------------------")
             tipored=check_input_value('Tu servidor1 necesita estar en una dmz o en una subred privada (dmz/privada): ',('dmz','privada'))
             destsubnet=''
 
@@ -704,7 +747,7 @@ if __name__ == '__main__':
                 )
                 print('launch template creado')
 
-            
+            print("---------------------------------------------------------")
             ec2_client.create_launch_template_version(
                     LaunchTemplateId=instance_launch_config2['ec2LaunchTemplateID'],
                     LaunchTemplateData={
@@ -722,13 +765,14 @@ if __name__ == '__main__':
                 DefaultVersion='2',
                 LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
             )
-
+            print("---------------------------------------------------------")
             print('nueva version default launch template servidor1')
 
             ec2_client.modify_launch_template(
                 DefaultVersion='2',
                 LaunchTemplateId=instance_launch_config2['ec2LaunchTemplateID'],
             )
+            print("---------------------------------------------------------")
             print('nueva version default launch template servidor2')
         elif appstyle==3:
             three_tier_infra()
