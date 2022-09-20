@@ -250,6 +250,7 @@ def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
     """
         Creates a SG ingres rule 
     """
+
     main_security_group_id=kwargs.get('main_security_group_id',None)
     ipRange=kwargs.get('ipRange',None)
     port=kwargs.get('port',None)
@@ -343,8 +344,9 @@ def front_back_infra(vpcid):
 
     add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=server2toserver1port,protocol=server2toserver1protocol,source_security_group_id=server2_sec_group['GroupId'])
     add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=server1toserver2port,protocol=server1toserver2protocol,source_security_group_id=server1_sec_group['GroupId'])
-
-    pass
+    
+    usecase_sg=[server1_sec_group['GroupId'],server2_sec_group['GroupId']]
+    return usecase_sg
 
 def three_tier_infra(vpcid):
     pass
@@ -460,9 +462,9 @@ if __name__ == '__main__':
             
             replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
             replicationSGID=replicationServersSG['GroupId']
-            add_ingress_rule(replicationSGID,1500,'tcp','0.0.0.0/0')
-            add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
-            add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
+            add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
+            add_egress_rule(main_security_group_id=replicationSGID,port=53,protocol='udp',ipRange='0.0.0.0/0')
+            add_egress_rule(main_security_group_id=replicationSGID,port=443,protocol='tcp',ipRange='0.0.0.0/0')
             
             try:
                 drs.create_replication_configuration_template(
@@ -562,7 +564,170 @@ if __name__ == '__main__':
 
         elif appstyle==2:
             vpcid=selectedvpc['Vpcs'][0]['VpcId']
-            front_back_infra(vpcid)
+            infra=front_back_infra(vpcid)
+            if public_or_private_connection == 'PUBLIC_IP':
+                subnets=find_staging_subnet(vpcid)
+                staging_subnet=subnets['PublicSN'][0]
+                create_public=True
+            else:
+                subnets=find_staging_subnet(vpcid)
+                staging_subnet=subnets['PublicSN'][0]
+                create_public=False
+                customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
+                vgw = ec2_client.create_vpn_gateway(Type='ipsec.1')
+                ec2_client.attach_vpn_gateway(VpcId=vpcid,VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'])
+                cgw_cidr=input('Ingresa el CIDR de tu red en premisas(X.X.X.X/X): ')
+                vpn_connection=ec2_client.create_vpn_connection(CustomerGatewayId=customergw['CustomerGateway']['CustomerGatewayId'],Type='ipsec.1',VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'],Options={'StaticRoutesOnly':True,'LocalIpv4NetworkCidr':cgw_cidr,'RemoteIpv4NetworkCidr':selectedvpc['Vpcs'][0]['CidrBlock']})
+                ec2_client.create_vpn_connection_route(DestinationCidrBlock=cgw_cidr,VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                ec2_client.create_vpn_connection_route(DestinationCidrBlock=selectedvpc['Vpcs'][0]['CidrBlock'],VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                routetables=find_route_tables(vpcid)
+
+                for table in routetables:
+                    ec2_client.enable_vgw_route_propagation(
+                        GatewayId=vgw['VpnGateway']['VpnGatewayId'],
+                        RouteTableId=table
+                    )
+
+            print("\nAhora crearemos el replication settings template")
+            
+            replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
+            replicationSGID=replicationServersSG['GroupId']
+            add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
+            add_egress_rule(main_security_group_id=replicationSGID,port=53,protocol='udp',ipRange='0.0.0.0/0')
+            add_egress_rule(main_security_group_id=replicationSGID,port=443,protocol='tcp',ipRange='0.0.0.0/0')
+
+            try:
+                drs.create_replication_configuration_template(
+                    associateDefaultSecurityGroup=False,
+                    bandwidthThrottling=500,
+                    createPublicIP=create_public,
+                    dataPlaneRouting=public_or_private_connection,
+                    defaultLargeStagingDiskType='GP3',
+                    ebsEncryption='DEFAULT',
+                    pitPolicy=[
+                        {
+                            'enabled':True,
+                            'interval':10,
+                            'retentionDuration':60,
+                            'ruleID':1,
+                            'units': 'MINUTE'
+                        },
+                        {
+                            'enabled':True,
+                            'interval':1,
+                            'retentionDuration':24,
+                            'ruleID':2,
+                            'units': 'HOUR'
+                        },
+                        {
+                            'enabled':True,
+                            'interval':1,
+                            'retentionDuration':7,
+                            'ruleID':3,
+                            'units': 'DAY'
+                        }
+                    ],
+                    replicationServerInstanceType='t3.small',
+                    replicationServersSecurityGroupsIDs=[
+                        replicationSGID,
+                    ],
+                    stagingAreaSubnetId=staging_subnet,
+                    stagingAreaTags={
+                        'Cretor': 'DRSAuto'
+                    },
+                    useDedicatedReplicationServer=False
+                )
+            except ClientError as error:
+                print('\nError al crear replication template: ',error)
+            else:
+                print('\nReplication template creado exitosamente')
+
+            print('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-')
+            print('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            print('\nEs hora de installar el agente el servidores fuente, ingresa los siguientes datos en los prompts:')
+            print('\nRegion: us-east-1')
+            print('\nAccess key: '+ keys['DRSAgentAccessKey'])
+            print('\nSecret key: '+ keys['DRSAgentSecret'])
+            print('\nSi quieres replicar todos los discos solo debes presionar Enter, de lo contario debes definir los discos que quieres replicar')
+            time.sleep(2)
+            print('\nUna vez se complete la instalacion veras el servidor aparecer en source servers en la consola web (https://us-east-1.console.aws.amazon.com/drs/home?region=us-east-1#/sourceServers)')
+            time.sleep(1)
+            print('\nDejanos saber cuando completes la instalacion y aparesca el servidor')
+            time.sleep(1)
+            input('\nPresiona Enter cuando estes listo')
+
+            source_server1_id=input('\nProporcionanos el id del servidor1: ')
+            drs.update_launch_configuration(
+                sourceServerID=source_server1_id,
+                targetInstanceTypeRightSizingMethod='BASIC'
+            )
+
+            source_server2_id=input('\nProporcionanos el id del servidor2: ')
+            drs.update_launch_configuration(
+                sourceServerID=source_server2_id,
+                targetInstanceTypeRightSizingMethod='BASIC'
+            )
+            instance_launch_config1=drs.get_launch_configuration(sourceServerID=source_server1_id)
+            instance_launch_config2=drs.get_launch_configuration(sourceServerID=source_server1_id)
+
+            tipored=check_input_value('Tu servidor1 necesita estar en una dmz o en una subred privada (dmz/privada): ',('dmz','privada'))
+            destsubnet=''
+
+            if tipored=='dmz':
+                destsubnet=subnets['PublicSN'][1]
+                ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':destsubnet,
+                            'Groups': [infra[0]]
+                        }],
+                    }
+                )
+                print('launch template creado')
+            else:
+                destsubnet=subnets['PrivateSN'][0]
+                ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':destsubnet,
+                            'Groups': [infra[0]]
+                        }],
+                    }
+                )
+                print('launch template creado')
+
+            
+            ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config2['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':subnets['PrivateSN'][1],
+                            'Groups': [infra[1]]
+                        }],
+                    }
+                )
+            print('launch template creado')
+
+            ec2_client.modify_launch_template(
+                DefaultVersion='2',
+                LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
+            )
+
+            print('nueva version default launch template servidor1')
+
+            ec2_client.modify_launch_template(
+                DefaultVersion='2',
+                LaunchTemplateId=instance_launch_config2['ec2LaunchTemplateID'],
+            )
+            print('nueva version default launch template servidor2')
         elif appstyle==3:
             three_tier_infra()
         time.sleep(1)
