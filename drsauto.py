@@ -246,23 +246,48 @@ def create_security_group(description,groupname,vpc_id):
     else:
         return response
 
-def add_ingress_rule(security_group_id,port,protocol,ipRange):
+def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
     """
         Creates a SG ingres rule 
     """
-    try:
-        response=ec2_client.authorize_security_group_ingress(
-                                                                GroupId=security_group_id,
-                                                                CidrIp=ipRange,
-                                                                FromPort=port,
-                                                                ToPort=port,
-                                                                IpProtocol=protocol
-                                                            )
-    except ClientError as error:
-        print('Error al crear la regla de ingreso', error)
+    main_security_group_id=kwargs.get('source_security_group_id',None)
+    ipRange=kwargs.get('ipRange',None)
+    port=kwargs.get('port',None)
+    protocol=kwargs.get('protocol',None)
+    source_security_group_id=kwargs.get('source_security_group_id',None)
+
+    if source_security_group_id:
+        try:
+            response=ec2_client.authorize_security_group_ingress(
+                                                                    GroupId=main_security_group_id,
+                                                                    IpPermissions=[{
+                                                                                    'FromPort':port,
+                                                                                    'ToPort':port,
+                                                                                    'IpProtocol':protocol,
+                                                                                    'UserIdGroupPairs':[
+                                                                                        {
+                                                                                            'GroupId':source_security_group_id
+                                                                                        }
+                                                                                    ]
+                                                                                }]
+                                                                )
+        except ClientError as error:
+            print('Error al crear la regla de ingreso', error)
+        else:
+            return response
     else:
-        return response
-    
+        try:
+            response=ec2_client.authorize_security_group_ingress(
+                                                                    GroupId=main_security_group_id,
+                                                                    CidrIp=ipRange,
+                                                                    FromPort=port,
+                                                                    ToPort=port,
+                                                                    IpProtocol=protocol
+                                                                )
+        except ClientError as error:
+            print('Error al crear la regla de ingreso', error)
+        else:
+            return response
 
 def add_egress_rule(security_group_id,port,protocol,ipRange):
     """
@@ -290,17 +315,30 @@ def add_egress_rule(security_group_id,port,protocol,ipRange):
         return response
 
 def molith_infra(vpc,port,protocol,trafic_origin):
-    monolith_sec_group=create_security_group('SG para un monolito publico','drsautomonolith',vpc)
+    monolith_sec_group=create_security_group('SG para un monolito','drsautomonolith',vpc)
     add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
 
     #egressrule
     return monolith_sec_group['GroupId']
 
 
-def front_back_infra(vpc):
+def front_back_infra(vpcid):
+    trafic_port_server1 = int(input("\nCual es el puerto de ingreso del servidor1: "))
+    trafic_protocol_server1 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
+    trafic_origin_server1 = input("\nCual es el CIDR que deben tener accesso al servidor1 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+
+    trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
+    trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
+    trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+
+    server1_sec_group = create_security_group('SG para server1','drsserver1',vpcid)
+    add_ingress_rule(server1_sec_group['GroupId'],trafic_port_server1,trafic_protocol_server1,trafic_origin_server1)
+
+    server2_sec_group = create_security_group('SG para server2','drsserver2',vpcid)
+    add_ingress_rule(server2_sec_group['GroupId'],trafic_port_server2,trafic_protocol_server2,trafic_origin_server2)
     pass
 
-def three_tier_infra(vpc):
+def three_tier_infra(vpcid):
     pass
 
 if __name__ == '__main__':
@@ -515,7 +553,8 @@ if __name__ == '__main__':
             print('nueva version default')
 
         elif appstyle==2:
-            front_back_infra()
+            vpcid=selectedvpc['Vpcs'][0]['VpcId']
+            front_back_infra(vpcid)
         elif appstyle==3:
             three_tier_infra()
         time.sleep(1)
