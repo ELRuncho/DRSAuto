@@ -250,7 +250,7 @@ def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
     """
         Creates a SG ingres rule 
     """
-    main_security_group_id=kwargs.get('source_security_group_id',None)
+    main_security_group_id=kwargs.get('main_security_group_id',None)
     ipRange=kwargs.get('ipRange',None)
     port=kwargs.get('port',None)
     protocol=kwargs.get('protocol',None)
@@ -316,6 +316,11 @@ def add_egress_rule(security_group_id,port,protocol,ipRange):
 
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito','drsautomonolith',vpc)
+    main_security_group_id=kwargs.get('source_security_group_id',None)
+    ipRange=kwargs.get('ipRange',None)
+    port=kwargs.get('port',None)
+    protocol=kwargs.get('protocol',None)
+    source_security_group_id=kwargs.get('source_security_group_id',None)
     add_ingress_rule(monolith_sec_group['GroupId'],port,protocol,trafic_origin)
 
     #egressrule
