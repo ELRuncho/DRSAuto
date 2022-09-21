@@ -318,6 +318,7 @@ def add_egress_rule(security_group_id,port,protocol,ipRange):
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito','drsautomonolith',vpc)
     print(monolith_sec_group)
+    print("\n"+monolith_sec_group['GroupId'])
     add_ingress_rule(main_source_security_group_id=monolith_sec_group['GroupId'],port=port,protocol=protocol,ipRange=trafic_origin)
 
     #egressrule
