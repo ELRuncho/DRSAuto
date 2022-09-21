@@ -252,7 +252,6 @@ def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
     """
 
     main_security_group_id=kwargs.get('main_security_group_id',None)
-    print(main_security_group_id)
     ipRange=kwargs.get('ipRange',None)
     port=kwargs.get('port',None)
     protocol=kwargs.get('protocol',None)
@@ -318,8 +317,6 @@ def add_egress_rule(security_group_id,port,protocol,ipRange):
 
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito','drsautomonolith',vpc)
-    print(monolith_sec_group)
-    print("\n"+monolith_sec_group['GroupId'])
     add_ingress_rule(main_security_group_id=monolith_sec_group['GroupId'],port=port,protocol=protocol,ipRange=trafic_origin)
 
     #egressrule
