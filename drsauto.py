@@ -484,6 +484,31 @@ if __name__ == '__main__':
                         GatewayId=vgw['VpnGateway']['VpnGatewayId'],
                         RouteTableId=table
                     )
+                deviceid=''
+                vpndevicetypes=ec2_client.get_vpn_connection_device_types()
+                vendors_disponibles=()
+                for item in vpndevicetypes['VpnConnectionDeviceTypes']:
+                    v=item.get('Vendor')
+                    v_touple=(v)
+                    vendors_disponibles=vendors_disponibles + v_touple
+
+                vendor=check_input_value('Cual es el fabricante de tu dispositivo vpn en premisas (cisco,fortinet...etc)',vendors_disponibles)
+
+                for item in vendors_disponibles['VpnConnectionDeviceTypes']:
+                    vname=item.get('Vendor')
+                    if vname==vendor:
+                        deviceid=item.get('VpnConnectionDeviceTypeId')
+
+                vpnconfig=ec2_client.get_vpn_connection_device_sample_configuration(VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'],VpnConnectionDeviceTypeId=deviceid)
+
+                try:
+                    with open('configvpn.txt','w') as f:
+                        f.write(vpnconfig['VpnConnectionDeviceSampleConfiguration'])
+                except FileNotFoundError:
+                    print('Error')
+                
+                print('creado el archivo de configuracion configvpn.txt con la info de configuracion de la vpn')
+
             print("---------------------------------------------------------")
             print("\nAhora crearemos el replication settings template")
             print("---------------------------------------------------------")
