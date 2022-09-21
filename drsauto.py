@@ -252,6 +252,7 @@ def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
     """
 
     main_security_group_id=kwargs.get('main_security_group_id',None)
+    print(main_security_group_id)
     ipRange=kwargs.get('ipRange',None)
     port=kwargs.get('port',None)
     protocol=kwargs.get('protocol',None)
