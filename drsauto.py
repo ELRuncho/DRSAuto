@@ -460,7 +460,7 @@ if __name__ == '__main__':
                 create_public=True
             else:
                 subnets=find_staging_subnet(vpcid)
-                staging_subnet=subnets['PublicSN'][0]
+                staging_subnet=subnets['PrivateSN'][0]
                 create_public=False
                 customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
                 print("-----------------Created customer gateway----------------------")
@@ -603,7 +603,7 @@ if __name__ == '__main__':
                 create_public=True
             else:
                 subnets=find_staging_subnet(vpcid)
-                staging_subnet=subnets['PublicSN'][0]
+                staging_subnet=subnets['PrivateSN'][0]
                 create_public=False
                 customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
                 print("---------------------------------------------------------")
