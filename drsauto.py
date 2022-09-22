@@ -336,11 +336,6 @@ def front_back_infra(vpcid):
     server2toserver1protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor1:")
     print("---------------------------------------------------------")
 
-    trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
-    print("---------------------------------------------------------")
-    trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
-    print("---------------------------------------------------------")
-    trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
     print("---------------------------------------------------------")
     server1toserver2port = int(input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: "))
     print("---------------------------------------------------------")
@@ -351,7 +346,6 @@ def front_back_infra(vpcid):
     add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=trafic_port_server1,protocol=trafic_protocol_server1,ipRange=trafic_origin_server1)
 
     server2_sec_group = create_security_group('SG para server2','drsserver2',vpcid)
-    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=trafic_port_server2,protocol=trafic_protocol_server2,ipRange=trafic_origin_server2)
 
     add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=server2toserver1port,protocol=server2toserver1protocol,source_security_group_id=server2_sec_group['GroupId'])
     add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=server1toserver2port,protocol=server1toserver2protocol,source_security_group_id=server1_sec_group['GroupId'])
@@ -372,11 +366,6 @@ def three_tier_infra(vpcid):
     server2toserver1protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor1:")
     print("---------------------------------------------------------")
 
-    trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
-    print("---------------------------------------------------------")
-    trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
-    print("---------------------------------------------------------")
-    trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
     print("---------------------------------------------------------")
     server1toserver2port = int(input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: "))
     print("---------------------------------------------------------")
@@ -387,11 +376,6 @@ def three_tier_infra(vpcid):
     server3toserver2protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor3:")
     print("---------------------------------------------------------")
 
-    trafic_port_server3 = int(input("\nCual es el puerto de ingreso del servidor2: "))
-    print("---------------------------------------------------------")
-    trafic_protocol_server3 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
-    print("---------------------------------------------------------")
-    trafic_origin_server3 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
     print("---------------------------------------------------------")
     server2toserver3port = int(input("\nCual es el puerto con el que el servidor2 se comunica con el servidor3: "))
     print("---------------------------------------------------------")
@@ -402,15 +386,16 @@ def three_tier_infra(vpcid):
     add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=trafic_port_server1,protocol=trafic_protocol_server1,ipRange=trafic_origin_server1)
 
     server2_sec_group = create_security_group('SG para server2','drsserver2',vpcid)
-    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=trafic_port_server2,protocol=trafic_protocol_server2,ipRange=trafic_origin_server2)
+
+    server3_sec_group = create_security_group('SG para server3','drsserver3',vpcid)
 
     add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=server2toserver1port,protocol=server2toserver1protocol,source_security_group_id=server2_sec_group['GroupId'])
     add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=server1toserver2port,protocol=server1toserver2protocol,source_security_group_id=server1_sec_group['GroupId'])
-    
-    usecase_sg=[server1_sec_group['GroupId'],server2_sec_group['GroupId']]
+    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=server3toserver2port,protocol=server3toserver2protocol,source_security_group_id=server3_sec_group['GroupId'])
+    add_ingress_rule(main_security_group_id=server3_sec_group['GroupId'],port=server2toserver3port,protocol=server2toserver3protocol,source_security_group_id=server2_sec_group['GroupId'])
+
+    usecase_sg=[server1_sec_group['GroupId'],server2_sec_group['GroupId'],server3_sec_group['GroupId']]
     return usecase_sg
-    
-    pass
 
 if __name__ == '__main__':
 
@@ -877,7 +862,238 @@ if __name__ == '__main__':
             print('nueva version default launch template servidor2')
             print("despliegue completo")
         elif appstyle==3:
-            three_tier_infra()
+            vpcid=selectedvpc['Vpcs'][0]['VpcId']
+            infra=three_tier_infra(vpcid)
+            if public_or_private_connection == 'PUBLIC_IP':
+                subnets=find_staging_subnet(vpcid)
+                staging_subnet=subnets['PublicSN'][0]
+                create_public=True
+            else:
+                subnets=find_staging_subnet(vpcid)
+                staging_subnet=subnets['PrivateSN'][0]
+                create_public=False
+                customergw = ec2_client.create_customer_gateway(BgpAsn=bgpasn,Type='ipsec.1',DeviceName='DRSAutoCGW',IpAddress=public_static_ip)
+                print("---------------------------------------------------------")
+                vgw = ec2_client.create_vpn_gateway(Type='ipsec.1')
+                print("---------------------------------------------------------")
+                time.sleep(10)
+                ec2_client.attach_vpn_gateway(VpcId=vpcid,VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'])
+                print("---------------------------------------------------------")
+                time.sleep(10)
+                cgw_cidr=input('Ingresa el CIDR de tu red en premisas(X.X.X.X/X): ')
+                print("---------------------------------------------------------")
+                vpn_connection=ec2_client.create_vpn_connection(CustomerGatewayId=customergw['CustomerGateway']['CustomerGatewayId'],Type='ipsec.1',VpnGatewayId=vgw['VpnGateway']['VpnGatewayId'],Options={'StaticRoutesOnly':True,'LocalIpv4NetworkCidr':cgw_cidr,'RemoteIpv4NetworkCidr':selectedvpc['Vpcs'][0]['CidrBlock']})
+                print("---------------------------------------------------------")
+                ec2_client.create_vpn_connection_route(DestinationCidrBlock=cgw_cidr,VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                print("---------------------------------------------------------")
+                ec2_client.create_vpn_connection_route(DestinationCidrBlock=selectedvpc['Vpcs'][0]['CidrBlock'],VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'])
+                print("---------------------------------------------------------")
+                routetables=find_route_tables(vpcid)
+
+                for table in routetables:
+                    ec2_client.enable_vgw_route_propagation(
+                        GatewayId=vgw['VpnGateway']['VpnGatewayId'],
+                        RouteTableId=table
+                    )
+                deviceid=''
+                vpndevicetypes=ec2_client.get_vpn_connection_device_types()
+                vendors_disponibles=()
+                for item in vpndevicetypes['VpnConnectionDeviceTypes']:
+                    v=item.get('Vendor')
+                    v_touple=(v)
+                    vendors_disponibles=vendors_disponibles + v_touple
+
+                vendor=check_input_value('Cual es el fabricante de tu dispositivo vpn en premisas (cisco,fortinet...etc)',vendors_disponibles)
+
+                for item in vendors_disponibles['VpnConnectionDeviceTypes']:
+                    vname=item.get('Vendor')
+                    if vname==vendor:
+                        deviceid=item.get('VpnConnectionDeviceTypeId')
+
+                vpnconfig=ec2_client.get_vpn_connection_device_sample_configuration(VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'],VpnConnectionDeviceTypeId=deviceid)
+
+                try:
+                    with open('configvpn.txt','w') as f:
+                        f.write(vpnconfig['VpnConnectionDeviceSampleConfiguration'])
+                except FileNotFoundError:
+                    print('Error')
+                
+                print('creado el archivo de configuracion configvpn.txt con la info de configuracion de la vpn')
+
+            print("---------------------------------------------------------")
+            print("\nAhora crearemos el replication settings template")
+            print("---------------------------------------------------------")
+            replicationServersSG=create_security_group('Security group with the required permissions for AWS Elastic Disaster Recovery Replication Servers','AWS Elastic Disaster Recovery default Replication Server Security Group',vpcid)
+            replicationSGID=replicationServersSG['GroupId']
+            add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
+            add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
+            add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
+
+            try:
+                drs.create_replication_configuration_template(
+                    associateDefaultSecurityGroup=False,
+                    bandwidthThrottling=500,
+                    createPublicIP=create_public,
+                    dataPlaneRouting=public_or_private_connection,
+                    defaultLargeStagingDiskType='GP3',
+                    ebsEncryption='DEFAULT',
+                    pitPolicy=[
+                        {
+                            'enabled':True,
+                            'interval':10,
+                            'retentionDuration':60,
+                            'ruleID':1,
+                            'units': 'MINUTE'
+                        },
+                        {
+                            'enabled':True,
+                            'interval':1,
+                            'retentionDuration':24,
+                            'ruleID':2,
+                            'units': 'HOUR'
+                        },
+                        {
+                            'enabled':True,
+                            'interval':1,
+                            'retentionDuration':7,
+                            'ruleID':3,
+                            'units': 'DAY'
+                        }
+                    ],
+                    replicationServerInstanceType='t3.small',
+                    replicationServersSecurityGroupsIDs=[
+                        replicationSGID,
+                    ],
+                    stagingAreaSubnetId=staging_subnet,
+                    stagingAreaTags={
+                        'Cretor': 'DRSAuto'
+                    },
+                    useDedicatedReplicationServer=False
+                )
+            except ClientError as error:
+                print('\nError al crear replication template: ',error)
+            else:
+                print("---------------------------------------------------------")
+                print('\nReplication template creado exitosamente')
+            print("---------------------------------------------------------")
+            print('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-')
+            print('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
+            print("---------------------------------------------------------")
+            print('\nEs hora de installar el agente el servidores fuente, ingresa los siguientes datos en los prompts:')
+            print('\nRegion: us-east-1')
+            print('\nAccess key: '+ keys['DRSAgentAccessKey'])
+            print('\nSecret key: '+ keys['DRSAgentSecret'])
+            print('\nSi quieres replicar todos los discos solo debes presionar Enter, de lo contario debes definir los discos que quieres replicar')
+            print("---------------------------------------------------------")
+            time.sleep(2)
+            print('\nUna vez se complete la instalacion veras el servidor aparecer en source servers en la consola web (https://us-east-1.console.aws.amazon.com/drs/home?region=us-east-1#/sourceServers)')
+            time.sleep(1)
+            print('\nDejanos saber cuando completes la instalacion y aparesca el servidor')
+            time.sleep(1)
+            input('\nPresiona Enter cuando estes listo')
+            print("---------------------------------------------------------")
+            source_server1_id=input('\nProporcionanos el id del servidor1: ')
+            drs.update_launch_configuration(
+                sourceServerID=source_server1_id,
+                targetInstanceTypeRightSizingMethod='BASIC'
+            )
+
+            print("---------------------------------------------------------")
+            source_server2_id=input('\nProporcionanos el id del servidor2: ')   
+            drs.update_launch_configuration(
+                sourceServerID=source_server2_id,
+                targetInstanceTypeRightSizingMethod='BASIC'
+            )
+
+            print("---------------------------------------------------------")
+            source_server3_id=input('\nProporcionanos el id del servidor2: ')   
+            drs.update_launch_configuration(
+                sourceServerID=source_server3_id,
+                targetInstanceTypeRightSizingMethod='BASIC'
+            )
+            instance_launch_config1=drs.get_launch_configuration(sourceServerID=source_server1_id)
+            instance_launch_config2=drs.get_launch_configuration(sourceServerID=source_server1_id)
+            instance_launch_config3=drs.get_launch_configuration(sourceServerID=source_server3_id)
+
+            print("---------------------------------------------------------")
+            tipored=check_input_value('Tu servidor1 necesita estar en una dmz o en una subred privada (dmz/privada): ',('dmz','privada'))
+            destsubnet=''
+
+            if tipored=='dmz':
+                destsubnet=subnets['PublicSN'][1]
+                ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':destsubnet,
+                            'Groups': [infra[0]]
+                        }],
+                    }
+                )
+                print('launch template creado')
+            else:
+                destsubnet=subnets['PrivateSN'][0]
+                ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':destsubnet,
+                            'Groups': [infra[0]]
+                        }],
+                    }
+                )
+                print('launch template creado')
+
+            print("---------------------------------------------------------")
+            ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config2['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':subnets['PrivateSN'][1],
+                            'Groups': [infra[1]]
+                        }],
+                    }
+                )
+            
+            ec2_client.create_launch_template_version(
+                    LaunchTemplateId=instance_launch_config3['ec2LaunchTemplateID'],
+                    LaunchTemplateData={
+                        'NetworkInterfaces':[{
+                            'AssociatePublicIpAddress': True,
+                            'DeviceIndex':0,
+                            'SubnetId':subnets['PrivateSN'][2],
+                            'Groups': [infra[2]]
+                        }],
+                    }
+                )
+            print('launch templates creados')
+
+            ec2_client.modify_launch_template(
+                DefaultVersion='2',
+                LaunchTemplateId=instance_launch_config1['ec2LaunchTemplateID'],
+            )
+            print("---------------------------------------------------------")
+            print('nueva version default launch template servidor1')
+
+            ec2_client.modify_launch_template(
+                DefaultVersion='2',
+                LaunchTemplateId=instance_launch_config2['ec2LaunchTemplateID'],
+            )
+            print("---------------------------------------------------------")
+            print('nueva version default launch template servidor2')
+            ec2_client.modify_launch_template(
+                DefaultVersion='2',
+                LaunchTemplateId=instance_launch_config3['ec2LaunchTemplateID'],
+            )
+            print("---------------------------------------------------------")
+            print('nueva version default launch template servidor3')
+            print("despliegue completo")
         time.sleep(1)
     else:
         print("deacuerdo, que tengas un feliz dia")
