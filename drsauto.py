@@ -360,6 +360,56 @@ def front_back_infra(vpcid):
     return usecase_sg
 
 def three_tier_infra(vpcid):
+    print("---------------------------------------------------------")
+    trafic_port_server1 = int(input("\nCual es el puerto de ingreso del servidor1: "))
+    print("---------------------------------------------------------")
+    trafic_protocol_server1 = input("\nCual es el protocol ip del servidor1 (tcp, udp o icmp): ")
+    print("---------------------------------------------------------")
+    trafic_origin_server1 = input("\nCual es el CIDR que deben tener accesso al servidor1 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    print("---------------------------------------------------------")
+    server2toserver1port = int(input("\nCual es el puerto con el que el servidor2 se comunica con el servidor1: "))
+    print("---------------------------------------------------------")
+    server2toserver1protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor1:")
+    print("---------------------------------------------------------")
+
+    trafic_port_server2 = int(input("\nCual es el puerto de ingreso del servidor2: "))
+    print("---------------------------------------------------------")
+    trafic_protocol_server2 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
+    print("---------------------------------------------------------")
+    trafic_origin_server2 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    print("---------------------------------------------------------")
+    server1toserver2port = int(input("\nCual es el puerto con el que el servidor1 se comunica con el servidor2: "))
+    print("---------------------------------------------------------")
+    server1toserver2protocol=input("\nCual es el protocolo con el que el servidor1 se comunica con el servidor2:")
+    print("---------------------------------------------------------")
+    server3toserver2port = int(input("\nCual es el puerto con el que el servidor2 se comunica con el servidor3: "))
+    print("---------------------------------------------------------")
+    server3toserver2protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor3:")
+    print("---------------------------------------------------------")
+
+    trafic_port_server3 = int(input("\nCual es el puerto de ingreso del servidor2: "))
+    print("---------------------------------------------------------")
+    trafic_protocol_server3 = input("\nCual es el protocol ip del servidor2 (tcp, udp o icmp): ")
+    print("---------------------------------------------------------")
+    trafic_origin_server3 = input("\nCual es el CIDR que deben tener accesso al servidor2 (X.X.X.X/X, donde 0.0.0.0/0 da acceso a todo origen): ")
+    print("---------------------------------------------------------")
+    server2toserver3port = int(input("\nCual es el puerto con el que el servidor2 se comunica con el servidor3: "))
+    print("---------------------------------------------------------")
+    server2toserver3protocol=input("\nCual es el protocolo con el que el servidor2 se comunica con el servidor3:")
+    print("---------------------------------------------------------")
+
+    server1_sec_group = create_security_group('SG para server1','drsserver1',vpcid)
+    add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=trafic_port_server1,protocol=trafic_protocol_server1,ipRange=trafic_origin_server1)
+
+    server2_sec_group = create_security_group('SG para server2','drsserver2',vpcid)
+    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=trafic_port_server2,protocol=trafic_protocol_server2,ipRange=trafic_origin_server2)
+
+    add_ingress_rule(main_security_group_id=server1_sec_group['GroupId'],port=server2toserver1port,protocol=server2toserver1protocol,source_security_group_id=server2_sec_group['GroupId'])
+    add_ingress_rule(main_security_group_id=server2_sec_group['GroupId'],port=server1toserver2port,protocol=server1toserver2protocol,source_security_group_id=server1_sec_group['GroupId'])
+    
+    usecase_sg=[server1_sec_group['GroupId'],server2_sec_group['GroupId']]
+    return usecase_sg
+    
     pass
 
 if __name__ == '__main__':
@@ -653,6 +703,31 @@ if __name__ == '__main__':
                         GatewayId=vgw['VpnGateway']['VpnGatewayId'],
                         RouteTableId=table
                     )
+                deviceid=''
+                vpndevicetypes=ec2_client.get_vpn_connection_device_types()
+                vendors_disponibles=()
+                for item in vpndevicetypes['VpnConnectionDeviceTypes']:
+                    v=item.get('Vendor')
+                    v_touple=(v)
+                    vendors_disponibles=vendors_disponibles + v_touple
+
+                vendor=check_input_value('Cual es el fabricante de tu dispositivo vpn en premisas (cisco,fortinet...etc)',vendors_disponibles)
+
+                for item in vendors_disponibles['VpnConnectionDeviceTypes']:
+                    vname=item.get('Vendor')
+                    if vname==vendor:
+                        deviceid=item.get('VpnConnectionDeviceTypeId')
+
+                vpnconfig=ec2_client.get_vpn_connection_device_sample_configuration(VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'],VpnConnectionDeviceTypeId=deviceid)
+
+                try:
+                    with open('configvpn.txt','w') as f:
+                        f.write(vpnconfig['VpnConnectionDeviceSampleConfiguration'])
+                except FileNotFoundError:
+                    print('Error')
+                
+                print('creado el archivo de configuracion configvpn.txt con la info de configuracion de la vpn')
+
             print("---------------------------------------------------------")
             print("\nAhora crearemos el replication settings template")
             print("---------------------------------------------------------")
@@ -800,6 +875,7 @@ if __name__ == '__main__':
             )
             print("---------------------------------------------------------")
             print('nueva version default launch template servidor2')
+            print("despliegue completo")
         elif appstyle==3:
             three_tier_infra()
         time.sleep(1)
