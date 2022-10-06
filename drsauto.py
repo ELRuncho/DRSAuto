@@ -531,6 +531,7 @@ if __name__ == '__main__':
                 vendors_disponibles=()
                 for item in vpndevicetypes['VpnConnectionDeviceTypes']:
                     v=item.get('Vendor')
+                    print(v)
                     v_touple=(v)
                     vendors_disponibles=vendors_disponibles + v_touple
 
