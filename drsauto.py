@@ -534,14 +534,14 @@ if __name__ == '__main__':
                     vendors_disponibles.append(v)
 
                 vendors_list=tuple(vendors_disponibles)
-                print(vendors_list)
 
                 vendor=check_input_value('Cual es el fabricante de tu dispositivo vpn en premisas (cisco,fortinet...etc)',vendors_list)
 
-                for item in vendors_disponibles['VpnConnectionDeviceTypes']:
+                for item in vpndevicetypes['VpnConnectionDeviceTypes']:
                     vname=item.get('Vendor')
                     if vname==vendor:
                         deviceid=item.get('VpnConnectionDeviceTypeId')
+                        break
 
                 vpnconfig=ec2_client.get_vpn_connection_device_sample_configuration(VpnConnectionId=vpn_connection['VpnConnection']['VpnConnectionId'],VpnConnectionDeviceTypeId=deviceid)
 
