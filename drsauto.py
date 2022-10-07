@@ -647,7 +647,7 @@ if __name__ == '__main__':
                     'NetworkInterfaces':[{
                         'AssociatePublicIpAddress': True,
                         'DeviceIndex':0,
-                        'SubnetId':subnets['PublicSN'][1],
+                        'SubnetId':destsubnet,
                         'Groups': [monolithSG]
                     }],
                 }
