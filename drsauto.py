@@ -532,8 +532,8 @@ if __name__ == '__main__':
                 for item in vpndevicetypes['VpnConnectionDeviceTypes']:
                     v=item.get('Vendor')
                     print(v)
-                    v_touple=(v)
-                    print(v_touple)
+                    v_touple=eval(v)
+                    print(str(v_touple))
                     vendors_disponibles=vendors_disponibles + v_touple
 
                 vendor=check_input_value('Cual es el fabricante de tu dispositivo vpn en premisas (cisco,fortinet...etc)',vendors_disponibles)
