@@ -534,6 +534,7 @@ if __name__ == '__main__':
                     vendors_disponibles.append(v)
 
                 vendors_list=tuple(vendors_disponibles)
+                print(vendors_list)
 
                 vendor=check_input_value('Cual es el fabricante de tu dispositivo vpn en premisas (cisco,fortinet...etc)',vendors_list)
 
