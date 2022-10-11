@@ -565,7 +565,7 @@ if __name__ == '__main__':
             try:
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
-                    bandwidthThrottling=500,
+                    bandwidthThrottling=1024,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
                     defaultLargeStagingDiskType='GP3',
@@ -734,7 +734,7 @@ if __name__ == '__main__':
             try:
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
-                    bandwidthThrottling=500,
+                    bandwidthThrottling=1024,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
                     defaultLargeStagingDiskType='GP3',
@@ -941,7 +941,7 @@ if __name__ == '__main__':
             try:
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
-                    bandwidthThrottling=500,
+                    bandwidthThrottling=1024,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
                     defaultLargeStagingDiskType='GP3',
