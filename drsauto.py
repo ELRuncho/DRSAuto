@@ -561,11 +561,11 @@ if __name__ == '__main__':
             add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
             add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
-            
+            bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
-                    bandwidthThrottling=1024,
+                    bandwidthThrottling=bandwith,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
                     defaultLargeStagingDiskType='GP3',
@@ -730,11 +730,11 @@ if __name__ == '__main__':
             add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
             add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
-
+            bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
-                    bandwidthThrottling=1024,
+                    bandwidthThrottling=bandwith,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
                     defaultLargeStagingDiskType='GP3',
@@ -937,11 +937,11 @@ if __name__ == '__main__':
             add_ingress_rule(main_security_group_id=replicationSGID,port=1500,protocol='tcp',ipRange='0.0.0.0/0')
             add_egress_rule(replicationSGID,53,'udp','0.0.0.0/0')
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
-
+            bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
-                    bandwidthThrottling=1024,
+                    bandwidthThrottling=bandwith,
                     createPublicIP=create_public,
                     dataPlaneRouting=public_or_private_connection,
                     defaultLargeStagingDiskType='GP3',
