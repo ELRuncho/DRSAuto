@@ -436,6 +436,7 @@ if __name__ == '__main__':
         public_or_private_connection=check_input_value("\nDeseas que la coneccion entre tu ambiente y el DR sea por internet o privada mediante VPN? (PUBLIC_IP/PRIVATE_IP): ",('PUBLIC_IP','PRIVATE_IP'))
         print("---------------------------------------------------------")
         if public_or_private_connection=='PRIVATE_IP':
+            #llamar vpn creator
             public_static_ip=input("Cual es la ip publica de tu ambiente para establecer la coneccion VPN?(X.X.X.X): ")
             print("---------------------------------------------------------")
             bgpasn=int(input("Cual es el ASN de BGP de tu dispositivo de red en premisas?(default 65000): "))
@@ -939,6 +940,7 @@ if __name__ == '__main__':
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
+                drs.initialize_service()
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
                     bandwidthThrottling=bandwith,
