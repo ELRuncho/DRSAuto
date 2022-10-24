@@ -564,6 +564,7 @@ if __name__ == '__main__':
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
+                drs.initialize_service()
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
                     bandwidthThrottling=bandwith,
@@ -733,6 +734,7 @@ if __name__ == '__main__':
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
+                drs.initialize_service()
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
                     bandwidthThrottling=bandwith,
