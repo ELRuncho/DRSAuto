@@ -244,6 +244,7 @@ def describe_vpc(tag_value):
     else:
         return response
 
+
 def find_staging_subnet(vpcid):
     """
         Looks for a public subnet for staging environmet
@@ -289,6 +290,7 @@ def find_staging_subnet(vpcid):
     else:
         return response
 
+
 def create_route(destination_cidr_block,gateway_id, route_table_id):
     """
         Creates a route in a route table
@@ -304,6 +306,7 @@ def create_route(destination_cidr_block,gateway_id, route_table_id):
         raise
     else:
         return response
+
 
 def find_route_tables(vpc_id):
     """
@@ -331,6 +334,7 @@ def find_route_tables(vpc_id):
         print('Error al listar las tablas: ', error)
     else:
         return route_tables_list
+
 
 def create_security_group(description,groupname,vpc_id):
     """
@@ -370,6 +374,7 @@ def create_security_group(description,groupname,vpc_id):
         print('Error al crear el security group', error)
     else:
         return response
+
 
 def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
     """
@@ -415,6 +420,7 @@ def add_ingress_rule(**kwargs):#security_group_id,port,protocol,ipRange
         else:
             return response
 
+
 def add_egress_rule(security_group_id,port,protocol,ipRange):
     """
         Creates a SG ingres rule 
@@ -439,6 +445,7 @@ def add_egress_rule(security_group_id,port,protocol,ipRange):
         print('Error al crear la regla de ingreso', error)
     else:
         return response
+
 
 def molith_infra(vpc,port,protocol,trafic_origin):
     monolith_sec_group=create_security_group('SG para un monolito','drsautomonolith',vpc)
@@ -477,6 +484,7 @@ def front_back_infra(vpcid):
     
     usecase_sg=[server1_sec_group['GroupId'],server2_sec_group['GroupId']]
     return usecase_sg
+
 
 def three_tier_infra(vpcid):
     print("---------------------------------------------------------")
@@ -521,6 +529,7 @@ def three_tier_infra(vpcid):
 
     usecase_sg=[server1_sec_group['GroupId'],server2_sec_group['GroupId'],server3_sec_group['GroupId']]
     return usecase_sg
+
 
 if __name__ == '__main__':
 
