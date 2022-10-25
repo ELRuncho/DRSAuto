@@ -1,3 +1,4 @@
+import json
 import time
 from typing import Type
 import boto3
@@ -92,6 +93,123 @@ def drsusers():
           }
     return users
 
+def initialize_drs():
+    id=sess.client('sts').get_caller_identity()['Account']
+    assume_role_policy_agent_role = json.dumps({
+        "Version": "2012-10-17",
+        "Statement":[
+            {
+                "Effect":"Allow",
+                "Principal":{
+                    "Service":"drs.amazonaws.com"
+                },
+                "Action":[
+                    "sts:AssumeRole",
+                    "sts:SetSourceIdentity"
+                ],
+                "Condition":{
+                    "StringLike":{
+                        "sts:SourceIdentity": "s-*",
+                        "aws:SourceAccount": id
+                    }
+                }
+            }
+        ]
+    })
+
+    assume_role_policy_failback_role = json.dumps({
+        "Version": "2012-10-17",
+        "Statement":[
+            {
+                "Effect":"Allow",
+                "Principal":{
+                    "Service":"drs.amazonaws.com"
+                },
+                "Action":[
+                    "sts:AssumeRole",
+                    "sts:SetSourceIdentity"
+                ],
+                "Condition":{
+                    "StringLike":{
+                        "sts:SourceIdentity": "i-*",
+                        "aws:SourceAccount": id
+                    }
+                }
+            }
+        ]
+    })
+
+    assume_role_policy_ec2_role = json.dumps({
+        "Version": "2012-10-17",
+        "Statement":[
+            {
+                "Effect":"Allow",
+                "Principal":{
+                    "Service":"ec2.amazonaws.com"
+                },
+                "Action":"sts:AssumeRole",
+            }
+        ]
+    })
+
+    agentRole = iamclient.create_role(
+        Path="/service-role/",
+        RoleName='AWSElasticDisasterRecoveryAgentRole',
+        AssumeRolePolicyDocument=assume_role_policy_agent_role
+    )
+
+    failbackRole = iamclient.create_role(
+        Path="/service-role/",
+        RoleName='AWSElasticDisasterRecoveryFailbackRole',
+        AssumeRolePolicyDocument=assume_role_policy_failback_role
+    )
+
+    convservRole = iamclient.create_role(
+        Path='/service-role/',
+        RoleName='AWSElasticDisasterRecoveryConversionServerRole',
+        AssumeRolePolicyDocument=assume_role_policy_ec2_role
+    )
+
+    recinsRole = iamclient.create_role(
+        Path='/service-role/',
+        RoleName='AWSElasticDisasterRecoveryRecoveryInstanceRole',
+        AssumeRolePolicyDocument=assume_role_policy_ec2_role
+    )
+
+    repinsRole = iamclient.create_role(
+        Path='/service-role/',
+        RoleName='AWSElasticDisasterRecoveryReplicationServerRole',
+        AssumeRolePolicyDocument=assume_role_policy_ec2_role
+    )
+
+    iamclient.attach_role_policy(
+        RoleName=agentRole["Role"]["RoleName"],
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSElasticDisasterRecoveryAgentPolicy',
+    )
+
+    iamclient.attach_role_policy(
+        RoleName=failbackRole["Role"]["RoleName"],
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSElasticDisasterRecoveryFailbackPolicy'
+    )
+
+    iamclient.attach_role_policy(
+        RoleName=convservRole["Role"]["RoleName"],
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSElasticDisasterRecoveryConversionServerPolicy'
+    )
+
+    iamclient.attach_role_policy(
+        RoleName=recinsRole["Role"]["RoleName"],
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSElasticDisasterRecoveryRecoveryInstancePolicy'
+    )
+
+    iamclient.attach_role_policy(
+        RoleName=repinsRole["Role"]["RoleName"],
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSElasticDisasterRecoveryReplicationServerPolicy'
+    )
+
+    drs.initialize_service()
+
+    return print('DRS inicializado exitosamente')
 
 def check_input_value(prompt,proper_values):
     """
@@ -564,7 +682,7 @@ if __name__ == '__main__':
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
-                drs.initialize_service()
+                initialize_drs()
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
                     bandwidthThrottling=bandwith,
@@ -734,7 +852,7 @@ if __name__ == '__main__':
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
-                drs.initialize_service()
+                initialize_drs()
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
                     bandwidthThrottling=bandwith,
@@ -942,7 +1060,7 @@ if __name__ == '__main__':
             add_egress_rule(replicationSGID,443,'tcp','0.0.0.0/0')
             bandwith=int(input("Cual es la tasa de trasnferencia limite del servidor origen?(numero expresado en Mbps): "))
             try:
-                drs.initialize_service()
+                initialize_drs()
                 drs.create_replication_configuration_template(
                     associateDefaultSecurityGroup=False,
                     bandwidthThrottling=bandwith,
