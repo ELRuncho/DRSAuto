@@ -1,4 +1,4 @@
-## Como instalar nabp
+## Como instalar DRSAuto
 
 ### Prerequisitos
 
@@ -32,12 +32,12 @@ Una vez estes en CloudShell puedes configurar aws cli que ya viene instalado, as
 
 1. Descarga nabp desde github ya sea descargando el zip o clonando el repositorio
 
-    `$ git clone https://github.com/ELRuncho/nabp.git`
+    `$ git clone https://github.com/ELRuncho/DRSAuto.git`
 
 2. Ingresa al folder:
 
-    `$ cd nabp`
+    `$ cd DRSAuto`
 
 3. Instala nabp usando pip:
 
-    `$ pip3 install .`
+    `$ python3 drsauto.py`
