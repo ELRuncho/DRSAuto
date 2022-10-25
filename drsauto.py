@@ -60,7 +60,7 @@ def drsusers():
             f.write('Aqui encontraras los pasos para configurar el agente de replicacion de DRS y otros recursos que necesites configurar en premisas')
             f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
             f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
-            f.write('\nEl comando en linux para descargar el cliente es: wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-installer-init.py')
+            f.write('\nEl comando en linux para descargar el cliente es: \n wget -O ./aws-replication-installer-init.py https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/linux/aws-replication-installer-init.py')
             f.write('\nEn Windows se puede descargar el agende de esta url: https://aws-elastic-disaster-recovery-' + sess.region_name + '.s3.amazonaws.com/latest/windows/AwsReplicationWindowsInstaller.exe')
             f.write('\n*--------------------------------------------------------------------------------------------------------------------------------*')
             f.write('\n*----------------------------Estas son las credenciales para que el agente de replicacion se conecte con AWS--------------------------------------------------------------*')
@@ -92,6 +92,7 @@ def drsusers():
             'FailbackSecret':failbackKeys['AccessKey']['SecretAccessKey']
           }
     return users
+
 
 def initialize_drs():
     id=sess.client('sts').get_caller_identity()['Account']
@@ -210,6 +211,7 @@ def initialize_drs():
     drs.initialize_service()
 
     return print('DRS inicializado exitosamente')
+
 
 def check_input_value(prompt,proper_values):
     """
